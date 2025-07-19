@@ -1,0 +1,62 @@
+<h1>{{ message }}</h1>
+<p>File ID: {{ file_id }}</p>
+<p>Task ID: <span id="taskId">{{ task_id }}</span></p>
+<p>Current Status: <span id="taskStatus">PENDING...</span></p>
+
+<div id="downloadLink" style="display:none;">
+    {% if is_encryption %}
+        <p>Your file has been encrypted. <a href="{% url 'dashboard:list_encrypted_files' directory='0' %}">View your files</a>.</p>
+    {% else %}
+        <p>Your file has been decrypted. <a id="decryptedDownloadUrl" href="{% url 'dashboard:download_decrypted_file' file_id %}">Download Decrypted File</a>.</p>
+    {% endif %}
+</div>
+
+<script>
+    const taskId = document.getElementById('taskId').innerText;
+    const taskStatusSpan = document.getElementById('taskStatus');
+    const downloadLinkDiv = document.getElementById('downloadLink');
+    const decryptedDownloadUrl = document.getElementById('decryptedDownloadUrl');
+    const isEncryption = "{{ is_encryption }}" === "True"; // Pass this from context
+
+    function checkStatus() {
+        fetch(`/dashboard/task_status/${taskId}/`)
+            .then(response => response.json())
+            .then(data => {
+                taskStatusSpan.innerText = data.status;
+                if (data.status === 'SUCCESS') {
+                    if (!isEncryption && data.success) { // Decryption success
+                        // This is where you'd handle the decrypted data.
+                        // For large files, the task would save to a temp file and return its URL/ID.
+                        // Here, for simplicity, we assume we want to download.
+                        // You might need an additional view that serves this specific decrypted data.
+                        // For demonstration:
+                        downloadLinkDiv.style.display = 'block';
+                        // Assuming your backend saves the file to a temporary location
+                        // and provides a URL. This part needs full implementation.
+                        // For now, it's a placeholder:
+                        decryptedDownloadUrl.href = `{% url 'dashboard:download_decrypted_file' file_id %}`; // Placeholder, replace with actual decrypted download URL
+                        decryptedDownloadUrl.innerText = 'Download Decrypted File (Placeholder)';
+
+
+                    } else if (isEncryption && data.success) { // Encryption success
+                        downloadLinkDiv.style.display = 'block';
+                    } else if (!data.success) { // Task failed (both encryption/decryption)
+                        taskStatusSpan.innerText += ` (Failed: ${data.message})`;
+                    }
+                } else if (data.status === 'FAILURE') {
+                    taskStatusSpan.innerText += ` (Error: ${data.message})`;
+                } else {
+                    setTimeout(checkStatus, 2000); // Poll every 2 seconds
+                }
+            })
+            .catch(error => {
+                console.error('Error fetching task status:', error);
+                taskStatusSpan.innerText = 'Error checking status.';
+            });
+    }
+
+    // Start polling when the page loads
+    checkStatus();
+</script>
+
+<p><a href="{% url 'dashboard:list_encrypted_files' directory='0' %}">Back to file list</a></p>

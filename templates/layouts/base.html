@@ -1,0 +1,30 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <link rel="icon" href="{% static '/favicon.svg' %}" type="image/svg+xml"/>
+  <link rel="stylesheet" href="{% static '/css/form.css' %}"/>
+  <link rel="stylesheet" href="{% static '/css/base_template.css' %}"/>
+  <link rel="stylesheet" href="{% static '/css/main.css' %}"/>
+  <style>
+      @font-face {
+          font-family: Geist;
+          src: url("{% static '/fonts/Geist.woff2' %}") format("woff2 supports variations"),
+          url("{% static '/fonts/Geist.woff2' %}") format("woff2-variations");
+          font-weight: 100 900;
+          font-display: swap;
+      }
+  </style>
+  <title>
+    {% block title %}
+    {% endblock title %}
+  </title>
+  <script src="{% static '/js/htmx.js' %}"></script>
+</head>
+<body>
+{% block content %}
+{% endblock content %}
+</body>
+</html>

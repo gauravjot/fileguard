@@ -1,0 +1,67 @@
+
+<form hx-post="{% url 'dashboard:create_directory' %}" hx-swap="innerHTML" hx-target="#directory_contents">
+  {% csrf_token %}
+  {{ create_directory_form.as_p }}
+  <button type="submit" class="">Create Directory</button>
+</form>
+  <div class="grid border-b border-gray-300 pb-1" style="grid-template-columns: repeat(12, 1fr); gap: 20px;">
+    <div class="font-semibold" style="grid-column: span 4;">
+      Name
+    </div>
+    <div class="font-semibold" style="grid-column: span 2;">
+      Date
+    </div>
+    <div class="font-semibold" style="grid-column: span 2;">
+      Size
+    </div>
+    <div class="font-semibold" style="grid-column: span 4;">
+      Actions
+    </div>
+  </div>
+  {% if parent_directory %}
+    <div class="border-b border-gray-200 py-1 text-sm hover-opaque">
+      <button hx-get="{% url 'dashboard:list_encrypted_files' directory=parent_directory %}" hx-swap="innerhtml" hx-target="#directory_contents" class="btn-link text-sm">.. back</button>
+    </div>
+  {% endif %}
+  {% if files or subdirectories %}
+  {% for subdir in subdirectories %}
+    <div class="grid border-b border-gray-200 py-1 text-sm hover-opaque" style="grid-template-columns: repeat(12, 1fr); gap: 20px;">
+      <div class="" style="grid-column: span 4;">
+        <button hx-get="{% url 'dashboard:list_encrypted_files' directory=subdir.pk %}" hx-swap="innerhtml" hx-target="#directory_contents" class="btn-link font-medium">{{ subdir.name }}</button>
+      </div>
+      <div class="" style="grid-column: span 2;">
+        {{ subdir.created_on|date:"Y-m-d H:i" }}
+      </div>
+      <div class="" style="grid-column: span 2;">
+      </div>
+      <div class="" style="grid-column: span 4;">
+      </div>
+    </div>
+  {% endfor %}
+  {% for file in files %}
+    <div class="grid border-b border-gray-200 py-1 text-sm hover-opaque" style="grid-template-columns: repeat(12, 1fr); gap: 20px;">
+      <div class="" style="grid-column: span 4;">
+        {{ file.original_filename }}
+      </div>
+      <div class="" style="grid-column: span 2;">
+        {{ file.upload_date|date:"Y-m-d H:i" }}
+      </div>
+      <div class="" style="grid-column: span 2;">
+        {{ file.file_size|filesizeformat }}
+      </div>
+      <div class="" style="grid-column: span 4;">
+        {% if file.status == 'COMPLETED' and file.is_encrypted %}
+            <a href="{{ file.get_absolute_url }}">Download Encrypted</a> |
+            <a href="{{ file.get_decryption_url }}">Decrypt</a>
+        {% elif file.status == 'FAILED' %}
+            <span style="color: red;">Processing Failed</span>
+        {% endif %}
+      </div>
+    </div>
+  {% endfor %}
+{% else %}
+<div class="border-b border-gray-200 py-1 text-sm text-gray-600 hover-opaque">
+  Directory is empty
+</div>
+{% endif %}
+<a href="{% url 'dashboard:upload_encrypt_file' %}">Upload more</a>

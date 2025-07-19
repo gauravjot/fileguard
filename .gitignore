@@ -16,3 +16,7 @@ build/
 __pycache__/
 migrations/
 *.egg-info
+
+media/decrypted_temp
+media/encrypted_files
+media/temp_uploads

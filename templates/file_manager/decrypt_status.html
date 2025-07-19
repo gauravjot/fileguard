@@ -1,0 +1,6 @@
+<h1>Decryption Queued</h1>
+<p>{{ message }}</p>
+<p>Task ID: {{ task_id }}</p>
+<p>You can check the server logs for real-time status.
+   For a real application, you'd use websockets or polling to update the user interface.</p>
+<p><a href="{% url 'dashboard:list_encrypted_files' directory='0' %}">Back to file list</a></p>

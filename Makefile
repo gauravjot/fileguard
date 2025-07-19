@@ -25,3 +25,6 @@ run:
 
 su:
 	.venv/bin/python manage.py createsuperuser
+
+celery:
+	.venv/bin/celery -A core worker -l info

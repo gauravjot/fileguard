@@ -1,0 +1,7 @@
+<h1>Decrypt File: {{ file_obj.original_filename }}</h1>
+<form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">Decrypt</button>
+</form>
+<p><a href="{% url 'dashboard:list_encrypted_files' directory='0' %}">Back to file list</a></p>

@@ -1,1 +1,18 @@
+{% extends "layouts/base.html" %}
+{% load static %}
+
+{% block title %}
+  Dashboard
+{% endblock title %}
+
+{% block content %}
+
+
 <h1>Dashboard</h1>
+<div hx-get="{% url 'dashboard:list_encrypted_files' directory='0' %}" hx-swap="innerHTML" hx-trigger="load" id="directory_contents"></div>
+
+<script>
+
+</script>
+
+{% endblock content %}
