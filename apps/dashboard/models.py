@@ -1,19 +1,14 @@
 import os
 from django.db import models
 
-from .managers import DirectoryManager
-
 
 class Directory(models.Model):
     name = models.CharField(max_length=255, unique=True)
     parent = models.ForeignKey('self', on_delete=models.CASCADE, related_name='subdirectories', blank=True, null=True)
     created_on = models.DateTimeField(auto_now_add=True)
 
-    objects = DirectoryManager()
-
     def __str__(self):
         return self.name
-
 
     def get_contents(self):
         """
@@ -37,6 +32,19 @@ class Directory(models.Model):
             descendants.extend(subdir.get_descendants())
         return descendants
 
+    def get_breadcrumbs(self) -> list[dict]:
+        """
+        Returns a list of directories from the root to this directory.
+        """
+        breadcrumbs = []
+        current = self
+        while current:
+            breadcrumbs.append({'name': current.name, 'id': current.pk})
+            current = current.parent
+        # Add '/' for the root directory
+        breadcrumbs.append({'name': '/', 'id': 0})
+        return breadcrumbs[::-1]
+
     def move_to(self, new_parent):
         if self.parent == new_parent:
             return
@@ -48,6 +56,21 @@ class Directory(models.Model):
         # Update the parent directory
         self.parent = new_parent
         self.save()
+
+    def create(self, name, parent=None):
+        """
+        Create a new directory with the given name and optional parent.
+        """
+        if not name:
+            raise ValueError("Directory name cannot be empty")
+        # Check if a directory with the same name already exists in the parent directory
+        if parent:
+            if super().objects.filter(name=name, parent=parent).exists():
+                raise ValueError(f"Directory '{name}' already exists in the specified parent directory")
+        else:
+            if super().objects.filter(name=name, parent__isnull=True).exists():
+                raise ValueError(f"Directory '{name}' already exists at the root level")
+        return super().objects.create(name=name, parent=parent)
 
     def delete(self, *args, **kwargs):
         # Delete all files in this directory before deleting the directory itself

@@ -1,5 +1,6 @@
 from django import forms
 
+
 class EncryptFileForm(forms.Form):
     file = forms.FileField(
         label='Select a file to encrypt',
@@ -15,6 +16,12 @@ class EncryptFileForm(forms.Form):
         label='Confirm Password',
         widget=forms.PasswordInput
     )
+    parent_directory = forms.IntegerField(
+        label='Parent Directory',
+        required=False,
+        # hidden
+        widget=forms.HiddenInput,
+    )
 
     def clean(self):
         cleaned_data = super().clean()
@@ -24,6 +31,7 @@ class EncryptFileForm(forms.Form):
         if password and password_confirm and password != password_confirm:
             self.add_error('password_confirm', "Passwords do not match.")
         return cleaned_data
+
 
 class DecryptFileForm(forms.Form):
     password = forms.CharField(

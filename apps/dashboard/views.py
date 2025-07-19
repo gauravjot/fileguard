@@ -1,6 +1,5 @@
 # file_manager/views.py
 from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse, Http404, JsonResponse, FileResponse
 from django.conf import settings
 from django.core.files.storage import default_storage
@@ -17,12 +16,13 @@ def index(request):
     return render(request, 'dashboard.html')
 
 
-def upload_encrypt_file(request):
+def upload_file_form(request):
     if request.method == 'POST':
         form = EncryptFileForm(request.POST, request.FILES)
         if form.is_valid():
             uploaded_file = form.cleaned_data['file']
             password = form.cleaned_data['password']
+            parent_directory = form.cleaned_data['parent_directory']
 
             # 1. Save the uploaded file temporarily to disk
             # Generate a unique temp filename to avoid clashes
@@ -46,43 +46,31 @@ def upload_encrypt_file(request):
                 file_size=0,       # Placeholder
                 salt=b'',          # Placeholder
                 nonce=b'',         # Placeholder
+                directory=Directory.objects.get(pk=parent_directory) if parent_directory else None,
             )
 
             # 3. Enqueue the encryption task to Celery
             task = perform_encryption_task.delay(temp_file_path_absolute, pending_file_entry.pk, password)
 
-            return render(request, 'file_manager/upload_status.html', {
-                'message': f"Encryption for '{uploaded_file.name}' has been queued.",
-                'file_id': pending_file_entry.pk,
-                'task_id': task.id,
-                'is_encryption': True,
-            })
-    else:
-        form = EncryptFileForm()
-    return render(request, 'file_manager/upload_form.html', {'form': form})
+            return redirect('dashboard:list_encrypted_files', directory=parent_directory if parent_directory else '')
+    return JsonResponse({'success': False, 'message': 'Invalid form submission.'}, status=400)
 
 
-def create_directory_form(request, parent_directory=None):
-    form = CreateDirectoryForm()
-    if parent_directory:
-        form.fields['parent_directory'].initial = parent_directory
-    return render(request, 'file_manager/create_directory.html', {'form': form})
-
-
-def create_directory(request):
+def create_directory_form(request):
     if request.method == 'POST':
         form = CreateDirectoryForm(request.POST)
         if form.is_valid():
             directory_name = form.cleaned_data['directory_name']
-            parent_directory = form.cleaned_data.get('parent_directory')
+            parent_directory = form.cleaned_data['parent_directory']
 
-            parent_directory_obj = Directory.objects.get(pk=parent_directory) if parent_directory else None
+            parent_directory_obj = Directory.objects.get(
+                pk=parent_directory) if parent_directory else None
 
             # Create the directory using the manager method
             try:
-                Directory.objects.create_directory(name=directory_name, parent=parent_directory_obj)
+                Directory.objects.create(name=directory_name, parent=parent_directory_obj)
                 # Redirect to the file list view
-                return redirect('dashboard:list_encrypted_files', directory=parent_directory if parent_directory else '')
+                return redirect('dashboard:list_encrypted_files', directory=parent_directory)
             except ValueError as e:
                 return JsonResponse({'success': False, 'message': str(e)}, status=400)
     return JsonResponse({'success': False, 'message': 'Invalid form submission.'}, status=400)
@@ -90,12 +78,23 @@ def create_directory(request):
 
 def list_encrypted_files(request, directory=None):
     try:
-        form = CreateDirectoryForm()
+        create_directory_form = CreateDirectoryForm()
+        upload_file_form = EncryptFileForm()
         if directory:
-            form.fields['parent_directory'].initial = directory
-        return render(request, 'file_manager/list_files.html', {'create_directory_form': form, **get_home_contents(directory=directory if directory is not None else '', sort='name')})
+            create_directory_form.fields['parent_directory'].initial = directory
+            upload_file_form.fields['parent_directory'].initial = directory
+        return render(
+            request,
+            'file_manager/list_files.html',
+            {
+                'create_directory_form': create_directory_form,
+                'upload_file_form': upload_file_form,
+                'breadcrumbs': Directory.objects.get(pk=directory).get_breadcrumbs() if directory and int(directory) > 0 else [Directory(name='/', parent=None)],
+                **get_home_contents(directory=directory if directory is not None else '', sort='name')
+            })
     except Directory.DoesNotExist:
         raise Http404("Directory not found.")
+
 
 def download_encrypted_file(request, file_id):
     encrypted_file_obj = get_object_or_404(EncryptedFile, id=file_id)
