@@ -40,12 +40,13 @@ def upload_file_form(request):
             # This allows you to track the file even before encryption completes.
             pending_file_entry = EncryptedFile.objects.create(
                 original_filename=uploaded_file.name,
+                original_file_size=uploaded_file.size,
                 status='PENDING',
                 # These fields will be updated by the Celery task
-                encrypted_file='',  # Placeholder
-                file_size=0,       # Placeholder
-                salt=b'',          # Placeholder
-                nonce=b'',         # Placeholder
+                encrypted_file='',
+                file_size=0,
+                salt=b'',
+                nonce=b'',
                 directory=Directory.objects.get(pk=parent_directory) if parent_directory else None,
             )
 
@@ -96,6 +97,11 @@ def list_encrypted_files(request, directory=None):
         raise Http404("Directory not found.")
 
 
+def list_file_item(request, file_id):
+    file_obj = get_object_or_404(EncryptedFile, id=file_id)
+    return render(request, 'file_manager/list_file_item.html', {'file': file_obj})
+
+
 def download_encrypted_file(request, file_id):
     encrypted_file_obj = get_object_or_404(EncryptedFile, id=file_id)
     try:
@@ -142,11 +148,17 @@ def decrypt_file(request, file_id):
     })
 
 
-def check_task_status(request, task_id):
+def check_task_status(request, file_id):
     """
     API endpoint to check the status of a Celery task.
     """
+    file = get_object_or_404(EncryptedFile, id=file_id)
+    task_id = file.celery_task_id
+    if not task_id:
+        return JsonResponse({'status': 'UNKNOWN', 'message': 'No task ID found for this file.'}, status=404)
     task = AsyncResult(task_id)
+    result = task.result
+    file = result.get('file', None)  # Assuming the task returns a dict with 'file' key
     if task.state == 'SUCCESS':
         # If decryption was successful, you'd handle the data here.
         # For simplicity, we just return status.
@@ -155,20 +167,19 @@ def check_task_status(request, task_id):
         # NOTE: Returning large decrypted data via JSON is not efficient or secure.
         # Best practice is to save to a temp file and provide a URL.
         # This will be the dict {'success': True/False, 'message': ...} or {'success': True, 'data': ...}
-        result = task.result
         if result['success']:
             # In a real app, save result['data'] (which is bytes) to a temp file,
             # then return a URL to that temp file.
             # For this example, we just confirm success.
-            return JsonResponse({'status': task.state, 'message': result.get('message', 'Error getting message'), 'success': True, 'file_id': task.args[0] if task.args and len(task.args) > 0 else None, 'decrypted_file_id': task.result.get('decrypted_file_id', None)})
+            return JsonResponse({'status': task.state, 'message': result.get('message', 'Error getting message'), 'success': True, 'file': file})
         else:
-            return JsonResponse({'status': task.state, 'message': result.get('message', 'Task failed'), 'success': False})
+            return JsonResponse({'status': task.state, 'message': result.get('message', 'Task failed'), 'success': False, 'file': file})
 
     elif task.state == 'FAILURE':
-        return JsonResponse({'status': task.state, 'message': str(task.info), 'success': False})
+        return JsonResponse({'status': task.state, 'message': str(task.info), 'success': False, 'file': file})
     else:
         # PENDING, STARTED, RETRY, etc.
-        return JsonResponse({'status': task.state, 'message': 'Processing...', 'success': None})
+        return JsonResponse({'status': task.state, 'message': 'Processing...', 'success': None, 'file': file})
 
 
 def download_decrypted_file(request, file_id):

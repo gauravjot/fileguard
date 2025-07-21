@@ -7,6 +7,7 @@ import uuid
 from .models import EncryptedFile
 from .crypto import save_encrypted_file_to_disk, decrypt_file_from_disk
 
+
 @shared_task(bind=True)
 def perform_encryption_task(self, uploaded_file_path, encrypted_file_id: int, password_raw):
     """
@@ -21,7 +22,7 @@ def perform_encryption_task(self, uploaded_file_path, encrypted_file_id: int, pa
     original_filename = encrypted_file_instance.original_filename
     # Make EncryptedFile object with status='PROCESSING'
     with transaction.atomic():
-        encrypted_file_instance.status='PROCESSING'
+        encrypted_file_instance.status = 'PROCESSING'
         encrypted_file_instance.celery_task_id = self.request.id
         encrypted_file_instance.save()
     try:
@@ -31,7 +32,7 @@ def perform_encryption_task(self, uploaded_file_path, encrypted_file_id: int, pa
 
             # Get the full path where the encrypted file will be saved
             encrypted_file_full_path = os.path.join(settings.MEDIA_ROOT, 'encrypted_files', encrypted_file_basename)
-             # Ensure directory exists
+            # Ensure directory exists
             os.makedirs(os.path.dirname(encrypted_file_full_path), exist_ok=True)
 
             # Encrypt and save to disk
@@ -54,7 +55,7 @@ def perform_encryption_task(self, uploaded_file_path, encrypted_file_id: int, pa
             encrypted_file_instance.save()
 
         print(f"Celery: Encryption task for {original_filename} completed successfully! Task ID: {self.request.id}")
-        return {'success': True, 'message': 'File encrypted successfully'}
+        return {'success': True, 'message': 'File encrypted successfully', 'file': encrypted_file_instance.serialize("json")}
 
     except Exception as e:
         print(f"Celery: Encryption task for {original_filename} failed: {e}")
@@ -67,7 +68,7 @@ def perform_encryption_task(self, uploaded_file_path, encrypted_file_id: int, pa
                     encrypted_file_instance.save()
         except Exception as update_e:
             print(f"Celery: Failed to update status for task {self.request.id}: {update_e}")
-        return {'success': False, 'message': str(e)}
+        return {'success': False, 'message': str(e), 'file': encrypted_file_instance.serialize("json") if encrypted_file_instance else None}
 
 
 @shared_task(bind=True)
@@ -106,14 +107,15 @@ def perform_decryption_task(self, encrypted_file_id, password_raw):
 
         with transaction.atomic():
             if decryption_success:
-                encrypted_file_instance.status = 'DECRYPTED' # File is ready for download
-                encrypted_file_instance.decrypted_temp_path = temp_decrypted_file_path # Store path
+                encrypted_file_instance.status = 'DECRYPTED'  # File is ready for download
+                encrypted_file_instance.decrypted_temp_path = temp_decrypted_file_path  # Store path
                 encrypted_file_instance.save()
-                print(f"Celery: Decryption task for {original_filename} completed successfully. Temp file: {temp_decrypted_file_path}")
+                print(
+                    f"Celery: Decryption task for {original_filename} completed successfully. Temp file: {temp_decrypted_file_path}")
                 return {
                     'success': True,
                     'message': 'File decrypted successfully and ready for download.',
-                    'decrypted_file_id': encrypted_file_id # Return ID for client to request download
+                    'file': encrypted_file_instance
                 }
             else:
                 encrypted_file_instance.status = 'FAILED'
@@ -122,7 +124,7 @@ def perform_decryption_task(self, encrypted_file_id, password_raw):
                 if os.path.exists(temp_decrypted_file_path):
                     os.remove(temp_decrypted_file_path)
                 print(f"Celery: Decryption task for {original_filename} failed: Decryption process failed.")
-                return {'success': False, 'message': 'Decryption process failed.'}
+                return {'success': False, 'message': 'Decryption process failed.', 'file': encrypted_file_instance}
 
     except EncryptedFile.DoesNotExist:
         print(f"Celery: Decryption task failed: EncryptedFile with ID {encrypted_file_id} not found.")
@@ -141,4 +143,4 @@ def perform_decryption_task(self, encrypted_file_id, password_raw):
                     encrypted_file_instance.save()
         except Exception as update_e:
             print(f"Celery: Failed to update status for task {self.request.id}: {update_e}")
-        return {'success': False, 'message': str(e)}
+        return {'success': False, 'message': str(e), 'file': None}

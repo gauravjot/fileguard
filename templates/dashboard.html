@@ -7,5 +7,7 @@
   <div hx-get="{% url 'dashboard:list_encrypted_files' directory='0' %}"
        hx-swap="innerHTML"
        hx-trigger="load"
+       class="flex flex-1 flex-col"
+       style="overflow:hidden"
        id="directory_contents"></div>
 {% endblock content %}

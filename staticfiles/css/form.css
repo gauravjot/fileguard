@@ -2,6 +2,7 @@ input[type="email"],
 input[type="number"],
 input[type="password"],
 input[type="text"],
+input[type="file"],
 textarea {
 	font-size: 1rem;
 	border-radius: 0.325rem;
@@ -284,6 +285,17 @@ button:focus-visible {
 	--button-hover-border-color: transparent;
 	--button-active-bg-color: var(--color-gray-700);
 	--button-active-text-color: var(--color-white);
+	--button-active-border-color: transparent;
+}
+.btn-ghost {
+	--button-bg-color: transparent;
+	--button-text-color: var(--color-gray-700);
+	--button-border-color: transparent;
+	--button-hover-bg-color: var(--color-gray-200);
+	--button-hover-text-color: var(--color-gray-700);
+	--button-hover-border-color: transparent;
+	--button-active-bg-color: var(--color-gray-300);
+	--button-active-text-color: var(--color-gray-700);
 	--button-active-border-color: transparent;
 }
 input[type="checkbox"],

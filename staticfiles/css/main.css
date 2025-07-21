@@ -3,18 +3,32 @@
 	transition: background 0.2s ease;
 }
 
-.btn-link {
+.btn-link,
+.btn-link-black {
 	color: var(--color-primary);
 	padding: 0;
 	margin: 0;
 	border: none;
 	background: none;
 	cursor: pointer;
-	font-weight: normal;
 }
-.btn-link:hover {
+.btn-link:hover,
+.btn-link-black:hover {
 	text-decoration: underline;
 	color: var(--color-primary-darker);
+	background: transparent;
+}
+.btn-link:active,
+.btn-link-black:active {
+	background-color: transparent;
+	border-color: transparent;
+	color: var(--button-active-text-color);
+}
+.btn-link-black {
+	color: var(--color-foreground);
+}
+.btn-link-black:hover {
+	color: var(--color-foreground);
 }
 
 .container {
@@ -107,4 +121,28 @@ form.w-full textarea {
 
 .shadow {
 	box-shadow: 2px 1px 4px rgba(0, 0, 0, 0.1);
+}
+
+.skeleton-shimmer {
+	position: relative;
+	overflow: hidden;
+	background: linear-gradient(
+		to right,
+		transparent 0%,
+		var(--color-gray-100) 25%,
+		var(--color-gray-200) 50%,
+		var(--color-gray-100) 75%,
+		transparent 100%
+	);
+	background-size: 200% 100%;
+	animation: shimmer 3s infinite linear;
+}
+
+@keyframes shimmer {
+	0% {
+		background-position: -200% 0;
+	}
+	100% {
+		background-position: 200% 0;
+	}
 }

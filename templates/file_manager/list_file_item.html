@@ -1,0 +1,24 @@
+{# djlint:off H021,H023 #}
+<div class="grid border-b border-gray-300 py-3 text-sm hover-opaque px-1"
+     aria-label="File: {{ file.original_filename }}"
+     data-status="{{ file.status }}"
+     data-file-id="{{ file.id }}"
+     data-file-name="{{ file.original_filename }}"
+     style="grid-template-columns: repeat(12, 1fr);
+            gap: 20px">
+  <div class="pl-2" style="grid-column: span 4;">
+    <button class="btn-link-black font-medium text-sm w-full text-left flex place-items-center">
+      <span class="ic ic-file ic-{{ file.extension }} mr-3 ic-gray-75"></span>{{ file.original_filename }}
+    </button>
+  </div>
+  <div style="grid-column: span 2;">{{ file.upload_date|date:"Y-m-d H:i" }}</div>
+  <div style="grid-column: span 2;">{{ file.file_size|filesizeformat }}</div>
+  <div style="grid-column: span 4;">
+    {% if file.status == 'COMPLETED' and file.is_encrypted %}
+      <a href="{{ file.get_absolute_url }}">Download Encrypted</a> |
+      <a href="{% url 'dashboard:decrypt_file' file_id=file.id %}">Decrypt</a>
+    {% elif file.status == 'FAILED' %}
+      <span style="color: red;">Processing Failed</span>
+    {% endif %}
+  </div>
+</div>

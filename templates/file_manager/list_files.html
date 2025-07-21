@@ -1,103 +1,162 @@
 {# djlint:off H021,H023 #}
-<div class="flex justify-between place-items-center items-center mb-8 p-3 sticky z-50 rounded-3 shadow bg-gray-100"
+<div class="flex justify-between place-items-center items-center my-3"
      style="top:4.5rem">
-  <div>
+  <div class="flex place-items-center gap-2">
     {% for crumb in breadcrumbs %}
       <button hx-get="{% url 'dashboard:list_encrypted_files' directory=crumb.id %}"
               hx-swap="innerHTML"
               hx-target="#directory_contents"
-              class="btn-light btn-sm">{{ crumb.name }}</button>
-      {% if not forloop.last %}<span class="mx-1 text-gray-300">/</span>{% endif %}
+              class="btn-light btn-md">{{ crumb.name }}</button>
+      {% if not forloop.last %}<span class="ic-md ic-chevron-right ic-gray-50"></span>{% endif %}
     {% endfor %}
   </div>
   <div class="flex gap-3">
+    <!-- Create directory -->
     <button id="openDialogBtn"
             hx-on:click="document.getElementById('create-directory-dialog').showModal()"
-            class="btn-secondary btn-md">Create Directory</button>
+            class="btn-ghost btn-md">Create Directory</button>
+    <dialog id="create-directory-dialog">
+      <div class="dialog-header">
+        <h2>Creating new Directory</h2>
+        <button class="dialog-close-button"
+                hx-on:click="document.getElementById('create-directory-dialog').close()">&times;</button>
+      </div>
+      <div class="dialog-content">
+        <form hx-post="{% url 'dashboard:create_directory_form' %}"
+              hx-swap="innerHTML"
+              hx-target="#directory_contents"
+              class="w-full">
+          {% csrf_token %}
+          {{ create_directory_form.as_p }}
+          <button type="submit" class="btn-primary">Create Directory</button>
+        </form>
+      </div>
+    </dialog>
+    <!-- Upload -->
     <button id="openUploadDialogBtn"
             hx-on:click="document.getElementById('upload-file-dialog').showModal()"
             class="btn-primary btn-md">Upload File</button>
+    <dialog id="upload-file-dialog">
+      <div class="dialog-header">
+        <h2>Upload File</h2>
+        <button class="dialog-close-button"
+                hx-on:click="document.getElementById('upload-file-dialog').close()">&times;</button>
+      </div>
+      <div class="dialog-content">
+        <form hx-post="{% url 'dashboard:upload_file_form' %}"
+              hx-target="#directory_contents"
+              hx-swap="innerHTML"
+              enctype="multipart/form-data">
+          {% csrf_token %}
+          {{ upload_file_form.as_p }}
+          <button type="submit" class="btn-primary">Encrypt & Upload</button>
+        </form>
+      </div>
+    </dialog>
   </div>
 </div>
-<!-- Create directory -->
-<dialog id="create-directory-dialog">
-  <div class="dialog-header">
-    <h2>Creating new Directory</h2>
-    <button class="dialog-close-button"
-            hx-on:click="document.getElementById('create-directory-dialog').close()">&times;</button>
-  </div>
-  <div class="dialog-content">
-    <form hx-post="{% url 'dashboard:create_directory_form' %}"
-          hx-swap="innerHTML"
-          hx-target="#directory_contents"
-          class="w-full">
-      {% csrf_token %}
-      {{ create_directory_form.as_p }}
-      <button type="submit" class="btn-primary">Create Directory</button>
-    </form>
-  </div>
-</dialog>
-<!-- Upload -->
-<dialog id="upload-file-dialog">
-  <div class="dialog-header">
-    <h2>Upload File</h2>
-    <button class="dialog-close-button"
-            hx-on:click="document.getElementById('upload-file-dialog').close()">&times;</button>
-  </div>
-  <div class="dialog-content">
-    <form hx-post="{% url 'dashboard:upload_file_form' %}"
-          hx-target="#directory_contents"
-          hx-swap="innerHTML"
-          enctype="multipart/form-data">
-      {% csrf_token %}
-      {{ upload_file_form.as_p }}
-      <button type="submit" class="btn-primary">Encrypt & Upload</button>
-    </form>
-  </div>
-</dialog>
 <!-- Directory Contents -->
-<div class="grid border-b border-gray-300 pb-1"
-     style="grid-template-columns: repeat(12, 1fr);
-            gap: 20px">
-  <div class="font-semibold" style="grid-column: span 4;">Name</div>
-  <div class="font-semibold" style="grid-column: span 2;">Date</div>
-  <div class="font-semibold" style="grid-column: span 2;">Size</div>
-  <div class="font-semibold" style="grid-column: span 4;">Actions</div>
+<div class="flex-1 flex flex-col" style="overflow:hidden">
+  <div class="grid border-b border-gray-400 pb-2 pt-3"
+       style="grid-template-columns: repeat(12, 1fr);
+              gap: 20px">
+    <div class="font-medium px-0.5" style="grid-column: span 4;">Name</div>
+    <div class="font-medium px-0.5" style="grid-column: span 2;">Date</div>
+    <div class="font-medium px-0.5" style="grid-column: span 2;">Size</div>
+    <div class="font-medium px-0.5" style="grid-column: span 4;">Actions</div>
+  </div>
+  <div class="flex-1" style="overflow-y: auto;">
+    <!-- Directories and Files -->
+    {% if files or subdirectories %}
+      {% for subdir in subdirectories %}
+        <div class="grid border-b border-gray-200 py-3 text-sm hover-opaque px-1"
+             style="grid-template-columns: repeat(12, 1fr);
+                    gap: 20px">
+          <div class="pl-2" style="grid-column: span 4;">
+            <button hx-get="{% url 'dashboard:list_encrypted_files' directory=subdir.pk %}"
+                    hx-swap="innerhtml"
+                    hx-target="#directory_contents"
+                    class="btn-link-black font-medium text-sm w-full text-left flex place-items-center">
+              <span class="ic ic-gray-75 ic-folder mr-3"></span>{{ subdir.name }}
+            </button>
+          </div>
+          <div style="grid-column: span 2;">{{ subdir.created_on|date:"Y-m-d H:i" }}</div>
+          <div style="grid-column: span 2;"></div>
+          <div style="grid-column: span 4;"></div>
+        </div>
+      {% endfor %}
+      <div id="file-list">
+        {% for file in files %}
+          {% include "file_manager/list_file_item.html" with file=file %}
+        {% endfor %}
+      </div>
+    </div>
+  {% else %}
+    <div class="border-b border-gray-200 py-3 text-sm text-gray-600">Directory is empty</div>
+  {% endif %}
 </div>
-<!-- Directories and Files -->
-{% if files or subdirectories %}
-  {% for subdir in subdirectories %}
-    <div class="grid border-b border-gray-200 py-1 text-sm hover-opaque"
-         style="grid-template-columns: repeat(12, 1fr);
-                gap: 20px">
-      <div class="" style="grid-column: span 4;">
-        <button hx-get="{% url 'dashboard:list_encrypted_files' directory=subdir.pk %}"
-                hx-swap="innerhtml"
-                hx-target="#directory_contents"
-                class="btn-link font-medium w-full text-left">{{ subdir.name }}</button>
-      </div>
-      <div class="" style="grid-column: span 2;">{{ subdir.created_on|date:"Y-m-d H:i" }}</div>
-      <div class="" style="grid-column: span 2;"></div>
-      <div class="" style="grid-column: span 4;"></div>
-    </div>
-  {% endfor %}
-  {% for file in files %}
-    <div class="grid border-b border-gray-200 py-1 text-sm hover-opaque"
-         style="grid-template-columns: repeat(12, 1fr);
-                gap: 20px">
-      <div class="" style="grid-column: span 4;">{{ file.original_filename }}</div>
-      <div class="" style="grid-column: span 2;">{{ file.upload_date|date:"Y-m-d H:i" }}</div>
-      <div class="" style="grid-column: span 2;">{{ file.file_size|filesizeformat }}</div>
-      <div class="" style="grid-column: span 4;">
-        {% if file.status == 'COMPLETED' and file.is_encrypted %}
-          <a href="{{ file.get_absolute_url }}">Download Encrypted</a> |
-          <a href="{{ file.get_decryption_url }}">Decrypt</a>
-        {% elif file.status == 'FAILED' %}
-          <span style="color: red;">Processing Failed</span>
-        {% endif %}
-      </div>
-    </div>
-  {% endfor %}
-{% else %}
-  <div class="border-b border-gray-200 py-1 text-sm text-gray-600">Directory is empty</div>
-{% endif %}
+<!-- track state of file uploads -->
+<script>
+    // make a oberservable to detect changes in the file list
+    const observer = new MutationObserver((mutations) => {
+      mutations.forEach(mutation => {
+        if (mutation.type === 'childList') {
+          const fileElements = document.querySelectorAll('[data-status="PROCESSING"], [data-status="PENDING"]');
+          if (fileElements.length === 0) {
+            return;
+          }
+          fileElements.forEach(el => {
+            // if mutation has triggered before then dont retrigger
+            if (el.getAttribute('data-status') === 'SUCCESS' || el.getAttribute('data-status') === 'FAILED') {
+              return;
+            }
+            // add skeleton-shimmer class
+            el.classList.add('skeleton-shimmer');
+            // every 1 second, poll the server for update
+            file_id = el.getAttribute('data-file-id');
+            const intervalId = setInterval(() => {
+              fetch(`/dashboard/task_status/${file_id}/`)
+                .then(response => response.json())
+                .then(data => {
+                  if (data.status === 'SUCCESS') {
+                    el.classList.remove('skeleton-shimmer');
+                    el.setAttribute('data-status', 'SUCCESS');
+                  } else if (data.status === 'FAILED') {
+                    el.classList.remove('skeleton-shimmer');
+                    el.classList.add('text-red-500');
+                    el.setAttribute('data-status', 'FAILED');
+                  }
+                  // stop polling
+                  clearInterval(intervalId);
+                  if (data.status !== 'SUCCESS' && data.status != 'FAILED') {
+                    return; // continue polling
+                  }
+                  // refetch the item row to update the UI
+                  reload_item_row(file_id);
+                });
+            }, 1000); // Poll every second
+          });
+        }
+      });
+    });
+    // Start observing the directory contents for changes
+    const directoryContents = document.getElementById('directory_contents');
+    if (directoryContents) {
+      observer.observe(directoryContents, {
+        childList: true,
+        subtree: true
+      });
+    }
+
+    function reload_item_row(fileId) {
+      const fileRow = document.querySelector(`[data-file-id="${fileId}"]`);
+      if (fileRow) {
+        fetch(`/dashboard/file/${fileId}/`)
+          .then(response => response.text())
+          .then(html => {
+            // replace fileRow
+            fileRow.outerHTML = html;
+          });
+      }
+    }
+</script>

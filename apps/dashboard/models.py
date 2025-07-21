@@ -1,5 +1,7 @@
 import os
+import json
 from django.db import models
+from django.core import serializers
 
 
 class Directory(models.Model):
@@ -42,7 +44,7 @@ class Directory(models.Model):
             breadcrumbs.append({'name': current.name, 'id': current.pk})
             current = current.parent
         # Add '/' for the root directory
-        breadcrumbs.append({'name': '/', 'id': 0})
+        breadcrumbs.append({'name': 'Home', 'id': 0})
         return breadcrumbs[::-1]
 
     def move_to(self, new_parent):
@@ -122,6 +124,17 @@ class EncryptedFile(models.Model):
             os.remove(self.decrypted_temp_path)
         return super().delete(*args, **kwargs)
 
+    def serialize(self, format='json'):
+        """
+        Serialize the EncryptedFile instance to the specified format.
+        Default is JSON.
+        """
+        data = serializers.serialize(format, [self], use_natural_primary_keys=True, fields=(
+            'original_filename', 'upload_date', 'file_size', 'original_file_size', 'is_encrypted', 'directory', 'celery_task_id', 'status'))
+        if format == 'json':
+            return json.loads(data)[0]
+        return data
+
 
 def get_home_contents(directory: str = '', sort: str = 'date') -> dict:
     """Get contents of the home directory, which includes all files and subdirectories.
@@ -149,10 +162,16 @@ def get_home_contents(directory: str = '', sort: str = 'date') -> dict:
     elif sort == 'date':
         subdirs = subdirs.order_by('-created_on')
         files = files.order_by('-upload_date')
-    print(f"parent dir", parent_directory)
+    # transformations on files
+    files = list(files)
+    result_files = []
+    for file in files:
+        file_row = {'extension': file.original_filename.split(
+            '.')[-1].lower() if '.' in file.original_filename else 'unknown', **file.__dict__}
+        result_files.append(file_row)
     return {
         'subdirectories': subdirs,
-        'files': files,
+        'files': result_files,
         'current_directory': directory if directory and len(directory) > 0 and int(directory) > 0 else None,
         'parent_directory': parent_directory
     }
