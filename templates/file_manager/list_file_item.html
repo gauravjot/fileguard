@@ -16,7 +16,16 @@
   <div style="grid-column: span 4;">
     {% if file.status == 'COMPLETED' and file.is_encrypted %}
       <a href="{{ file.get_absolute_url }}">Download Encrypted</a> |
-      <a href="{% url 'dashboard:decrypt_file' file_id=file.id %}">Decrypt</a>
+      <button class="btn-link-black"
+              hx-get="{% url 'dashboard:decrypt_file' file_id=file.id %}"
+              hx-swap="beforeend"
+              hx-target="#decrypt-file-dialog-container"
+              hx-on::before-request="document.querySelectorAll('#decrypt-file-dialog').forEach(dialog => { if (dialog.open) { dialog.close(); } dialog.remove(); }); ">
+        Decrypt
+      </button>
+      <div id="decrypt-file-dialog-container"
+           hx-on::after-settle="const newDialog = event.detail.elt.querySelector('#decrypt-file-dialog'); if (newDialog) { newDialog.showModal(); } else { console.warn('Dialog #decrypt-file-dialog not found after swap.'); }">
+      </div>
     {% elif file.status == 'FAILED' %}
       <span style="color: red;">Processing Failed</span>
     {% endif %}

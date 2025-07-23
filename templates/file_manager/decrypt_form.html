@@ -1,7 +1,23 @@
-<h1>Decrypt File: {{ file_obj.original_filename }}</h1>
-<form method="post">
-    {% csrf_token %}
-    {{ form.as_p }}
-    <button type="submit">Decrypt</button>
-</form>
-<p><a href="{% url 'dashboard:list_encrypted_files' directory='0' %}">Back to file list</a></p>
+<dialog id="decrypt-file-dialog">
+  <div class="dialog-header">
+    <h2>Decrypt File: {{ file_obj.original_filename }}</h2>
+    <button class="btn-ghost aspect-square"
+            onclick="document.getElementById('decrypt-file-dialog').remove()"
+            aria-label="Close dialog">
+      <span class="ic ic-close ic-gray-700"></span>
+    </button>
+  </div>
+  <div class="dialog-content">
+    <form method="post" class="w-full">
+      {% csrf_token %}
+      {{ form.as_p }}
+      <button class="btn-primary" type="submit">Decrypt</button>
+    </form>
+  </div>
+  <script>
+    // On close, remove the dialog from the DOM
+    document.getElementById('decrypt-file-dialog').addEventListener('close', function() {
+      this.remove();
+    });
+  </script>
+</dialog>
