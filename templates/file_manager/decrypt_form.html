@@ -7,8 +7,11 @@
       <span class="ic ic-close ic-gray-700"></span>
     </button>
   </div>
-  <div class="dialog-content">
-    <form method="post" class="w-full">
+  <div class="dialog-content" id="decrypt-file-dialog-content">
+    <form hx-post="{% url 'dashboard:decrypt_file' file_id=file_obj.pk %}"
+          hx-target="#decrypt-file-dialog-content"
+          hx-swap="innerHTML"
+          class="w-full">
       {% csrf_token %}
       {{ form.as_p }}
       <button class="btn-primary" type="submit">Decrypt</button>

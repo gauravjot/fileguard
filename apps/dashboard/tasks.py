@@ -115,7 +115,7 @@ def perform_decryption_task(self, encrypted_file_id, password_raw):
                 return {
                     'success': True,
                     'message': 'File decrypted successfully and ready for download.',
-                    'file': encrypted_file_instance
+                    'file': encrypted_file_instance.serialize("json"),
                 }
             else:
                 encrypted_file_instance.status = 'FAILED'
@@ -124,7 +124,7 @@ def perform_decryption_task(self, encrypted_file_id, password_raw):
                 if os.path.exists(temp_decrypted_file_path):
                     os.remove(temp_decrypted_file_path)
                 print(f"Celery: Decryption task for {original_filename} failed: Decryption process failed.")
-                return {'success': False, 'message': 'Decryption process failed.', 'file': encrypted_file_instance}
+                return {'success': False, 'message': 'Decryption process failed.', 'file': encrypted_file_instance.serialize("json") if encrypted_file_instance else None}
 
     except EncryptedFile.DoesNotExist:
         print(f"Celery: Decryption task failed: EncryptedFile with ID {encrypted_file_id} not found.")

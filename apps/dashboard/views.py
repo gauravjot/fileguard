@@ -119,7 +119,7 @@ def decrypt_file(request, file_id):
     if request.method == 'POST':
         form = DecryptFileForm(request.POST)
         if form.is_valid():
-            password = form.cleaned_data['password']
+            password = form.cleaned_data['password']\
 
             # Enqueue the decryption task
             task = perform_decryption_task.delay(
@@ -132,12 +132,9 @@ def decrypt_file(request, file_id):
             encrypted_file_obj.status = 'PENDING_DECRYPTION'  # Or PROCESSING
             encrypted_file_obj.save()
 
-            return render(request, 'file_manager/upload_status.html', {  # Reusing upload_status template
-                'message': f"Decryption for '{encrypted_file_obj.original_filename}' has been queued. "
-                f"You can track its status.",
-                'file_id': encrypted_file_obj.pk,
+            return render(request, 'file_manager/decrypt_status.html', {
                 'task_id': task.id,
-                'is_encryption': False,
+                'file_id': encrypted_file_obj.pk
             })
     else:
         form = DecryptFileForm()
@@ -158,28 +155,30 @@ def check_task_status(request, file_id):
         return JsonResponse({'status': 'UNKNOWN', 'message': 'No task ID found for this file.'}, status=404)
     task = AsyncResult(task_id)
     result = task.result
-    file = result.get('file', None)  # Assuming the task returns a dict with 'file' key
-    if task.state == 'SUCCESS':
-        # If decryption was successful, you'd handle the data here.
-        # For simplicity, we just return status.
-        # If the task returned the decrypted data, you'd retrieve it from task.result['data']
-        # and potentially serve it or save it to a temporary download location.
-        # NOTE: Returning large decrypted data via JSON is not efficient or secure.
-        # Best practice is to save to a temp file and provide a URL.
-        # This will be the dict {'success': True/False, 'message': ...} or {'success': True, 'data': ...}
-        if result['success']:
-            # In a real app, save result['data'] (which is bytes) to a temp file,
-            # then return a URL to that temp file.
-            # For this example, we just confirm success.
-            return JsonResponse({'status': task.state, 'message': result.get('message', 'Error getting message'), 'success': True, 'file': file})
+    try:
+        file = result.get('file', None)  # Assuming the task returns a dict with 'file' key
+        if task.state == 'SUCCESS':
+            # If decryption was successful, you'd handle the data here.
+            # For simplicity, we just return status.
+            # If the task returned the decrypted data, you'd retrieve it from task.result['data']
+            # and potentially serve it or save it to a temporary download location.
+            # NOTE: Returning large decrypted data via JSON is not efficient or secure.
+            # Best practice is to save to a temp file and provide a URL.
+            # This will be the dict {'success': True/False, 'message': ...} or {'success': True, 'data': ...}
+            if result['success']:
+                # In a real app, save result['data'] (which is bytes) to a temp file,
+                # then return a URL to that temp file.
+                # For this example, we just confirm success.
+                return JsonResponse({'status': task.state, 'message': result.get('message', 'Error getting message'), 'success': True, 'file': file})
+            else:
+                return JsonResponse({'status': task.state, 'message': result.get('message', 'Task failed'), 'success': False, 'file': file})
+        elif task.state == 'FAILURE':
+            return JsonResponse({'status': task.state, 'message': str(task.info), 'success': False, 'file': file})
         else:
-            return JsonResponse({'status': task.state, 'message': result.get('message', 'Task failed'), 'success': False, 'file': file})
-
-    elif task.state == 'FAILURE':
-        return JsonResponse({'status': task.state, 'message': str(task.info), 'success': False, 'file': file})
-    else:
-        # PENDING, STARTED, RETRY, etc.
-        return JsonResponse({'status': task.state, 'message': 'Processing...', 'success': None, 'file': file})
+            # PENDING, STARTED, RETRY, etc.
+            return JsonResponse({'status': task.state, 'message': 'Processing...', 'success': None, 'file': file})
+    except:
+        return JsonResponse({'status': task.state, 'message': 'Task is still processing.', 'success': None, 'file': None})
 
 
 def download_decrypted_file(request, file_id):
