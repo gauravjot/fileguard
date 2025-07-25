@@ -12,6 +12,9 @@ key.bin
 dist/
 build/
 
+config/*
+!config/README.md
+
 # django
 __pycache__/
 migrations/

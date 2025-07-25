@@ -28,3 +28,6 @@ su:
 
 celery:
 	.venv/bin/celery -A core worker -l info
+
+generate_key:
+	.venv/bin/python manage.py generate_encryption_key
