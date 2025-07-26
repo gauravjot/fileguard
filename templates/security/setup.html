@@ -1,0 +1,45 @@
+{% extends "layouts/base.html" %}
+{% load static %}
+{% block title %}
+  Setup
+{% endblock title %}
+{% block content %}
+  <div style="max-width: 400px; margin: 0 auto;" class="w-full">
+    <h1 class="text-3xl font-bold tracking-tight mt-6 mb-4">Setup</h1>
+    <p class="text-gray-600 my-4">
+      Welcome to the setup page. Please complete the form below to finish the setup process.
+    </p>
+    <form method="post" enctype="multipart/form-data" class="w-full">
+      {% csrf_token %}
+      <p>
+        {{ form.password.label_tag }}
+        {{ form.password }}
+        {{ form.password.help_text }}
+      </p>
+      <p>
+        {{ form.confirm_password.label_tag }}
+        {{ form.confirm_password }}
+      </p>
+      <p>
+        {{ form.otp_secret.label_tag }}
+        {{ form.otp_secret }}
+        {{ form.otp_secret.help_text }}
+        <div id="qrcode" class="my-4 mx-auto"></div>
+      </p>
+      <p>
+        {{ form.otp_code.label_tag }}
+        {{ form.otp_code }}
+        {{ form.otp_code.help_text }}
+      </p>
+      <button class="btn btn-primary my-2" type="submit">Complete Setup</button>
+    </form>
+  </div>
+  <script type="text/javascript" src="{% static '/js/qrcode.min.js' %}"></script>
+  <script type="text/javascript" defer>
+      var qrcode = new QRCode(document.getElementById("qrcode"), {
+          width: 200,
+          height: 200
+      });
+      qrcode.makeCode("otpauth://totp/Fileguard:Admin_Account?secret={{form.otp_secret.value}}&issuer=FileGuardSetup");
+  </script>
+{% endblock content %}

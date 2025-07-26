@@ -1,0 +1,22 @@
+{% extends "layouts/base.html" %}
+{% load static %}
+{% block title %}
+  Setup
+{% endblock title %}
+{% block content %}
+  <div style="max-width: 600px; margin: 0 auto;" class="w-full">
+    <h1 class="text-3xl font-bold tracking-tight mt-6 mb-4">Setup Successful</h1>
+    <p class="text-gray-600 my-4">You are all set up! Your security settings have been successfully configured.</p>
+    <h2 class="text-2xl font-semibold tracking-tigher my-4">Backup Codes</h2>
+    <p class="text-gray-600 my-4">
+      Please make sure to save your backup codes securely. They can be used to access fileguard in case you lose access to your primary authentication method.
+      <br />
+      <br />
+      <span class="text-danger">IMPORTANT: These codes will never be shown again.</span>
+    </p>
+    <ul class="list-disc pl-5 border border-gray-300 rounded-2 p-2">
+      {% for code in backup_codes %}<li class="text-gray-800 my-2 font-mono">{{ code }}</li>{% endfor %}
+    </ul>
+    <a href="{% url 'dashboard:index' %}" class="btn btn-success my-5">I understand, Go to Dashboard →</a>
+  </div>
+{% endblock content %}

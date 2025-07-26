@@ -1,0 +1,15 @@
+{% extends "layouts/base.html" %}
+{% load static %}
+{% block title %}
+  Setup
+{% endblock title %}
+{% block content %}
+  <div style="max-width: 600px; margin: 0 auto;" class="w-full">
+    <h1 class="text-3xl font-bold tracking-tight mt-6 mb-4">Setup Already Done</h1>
+    <p class="text-gray-600 my-4">
+      It seems you have already completed the setup process. If you need to change your security settings, please visit the settings page after logging in.
+    </p>
+    <p class="text-gray-600 my-4">This process cannot be repeated.</p>
+    <a href="{% url 'dashboard:index' %}" class="btn btn-primary my-5">Go to Dashboard</a>
+  </div>
+{% endblock content %}

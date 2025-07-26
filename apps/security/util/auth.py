@@ -39,14 +39,15 @@ def config_auth(password: str, otp_secret: str, otp_code: str) -> list[str]:
     cipher = AES.new(key, AES.MODE_EAX)
     # Generate four random 6-digit alphanumeric codes
     backup_codes = []
+    hashed_backup_codes = []
     for _ in range(4):
         backup_code = ''.join(random.choices(
             string.ascii_lowercase + string.digits, k=6))
-        backup_code = hash_this(backup_code)
         backup_codes.append(backup_code)
+        hashed_backup_codes.append(hash_this(backup_code))
     # Encrypt
     ciphertext, tag = cipher.encrypt_and_digest(
-        hash_this(password).encode() + otp_secret.encode() + ''.join(backup_codes).encode())
+        hash_this(password).encode() + otp_secret.encode() + ''.join(hashed_backup_codes).encode())
     encrypted = [x for x in (cipher.nonce, tag, ciphertext)]
 
     # Save to pass file
@@ -91,6 +92,14 @@ def verify_auth(password: str, otp_code: str):
         return True
     except (ValueError, KeyError):
         return False
+
+
+def verify_totp(otp_secret: str, otp_code: str) -> bool:
+    """
+    Verify the OTP code against the provided OTP secret.
+    """
+    totp = pyotp.TOTP(otp_secret)
+    return totp.verify(otp_code, valid_window=1)
 
 
 def generate_otp_secret():

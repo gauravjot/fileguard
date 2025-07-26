@@ -118,6 +118,10 @@ form.w-full input[type="file"],
 form.w-full textarea {
 	width: 100%;
 }
+form .errorlist li {
+	color: var(--color-danger);
+	font-weight: 600;
+}
 
 .shadow {
 	box-shadow: 2px 1px 4px rgba(0, 0, 0, 0.1);

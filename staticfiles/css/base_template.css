@@ -2738,3 +2738,6 @@ h6 {
 .grid {
 	display: grid;
 }
+.font-mono {
+	font-family: var(--font-mono);
+}
