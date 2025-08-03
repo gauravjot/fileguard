@@ -17,6 +17,11 @@
 *.sln
 *.sw?
 
+config/*
+!config/README.md
+/staticfiles
+**/staticfiles
+
 # Python
 **/.venv
 **/__pycache__/

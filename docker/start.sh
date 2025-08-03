@@ -15,6 +15,21 @@ cd /opt/fileguard
 python manage.py makemigrations
 python manage.py migrate
 
+# Check if config folder exists
+if [ ! -d /opt/fileguard/config ]; then
+  echo "\nConfig folder not found, creating..."
+  mkdir -p /opt/fileguard/config
+else
+  echo "\nConfig folder exists, checking for encryption key..."
+fi
+# Check if encryption key exists in config folder
+if [ ! -f /opt/fileguard/config/encryption_key.txt ]; then
+  echo "-- Encryption key not found, generating a new one..."
+  python manage.py generate_encryption_key
+else
+  echo "-- Encryption key found, using existing key."
+fi
+
 # Start the application (supervisord)
-echo "Starting supervisord..."
+echo "\nStarting supervisord..."
 exec /usr/bin/supervisord -n -c /etc/supervisor/conf.d/supervisor.conf
