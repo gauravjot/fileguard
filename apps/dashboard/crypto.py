@@ -9,10 +9,11 @@ KEY_LENGTH = 32
 SALT_LENGTH = 16
 NONCE_LENGTH = 16
 ITERATIONS = 100000
-CHUNK_SIZE = 64 * 1024 # 64 KB chunks
+CHUNK_SIZE = 64 * 1024  # 64 KB chunks
+
 
 def derive_key(password, salt, iterations=ITERATIONS, key_len=KEY_LENGTH):
-    return PBKDF2(password.encode(), salt, dkLen=key_len, count=iterations, hmac_hash_module=SHA256)
+    return PBKDF2(password, salt, dkLen=key_len, count=iterations, hmac_hash_module=SHA256)
 
 
 def save_encrypted_file_to_disk(uploaded_file_obj, output_path, password):
@@ -81,13 +82,13 @@ def decrypt_file_from_disk(input_filepath, output_filepath, password, salt, nonc
         with open(input_filepath, 'rb') as infile, open(output_filepath, 'wb') as outfile:
             # Read and discard the salt and nonce (they are passed as arguments)
             # Ensure the file pointer is at the start of the ciphertext
-            infile.seek(SALT_LENGTH + NONCE_LENGTH) # Move past salt and nonce
+            infile.seek(SALT_LENGTH + NONCE_LENGTH)  # Move past salt and nonce
 
             # Calculate where the tag should be (16 bytes from end)
             file_size = os.path.getsize(input_filepath)
             tag_start_offset = file_size - 16
 
-            if tag_start_offset < (SALT_LENGTH + NONCE_LENGTH): # Ensure file is large enough for header + tag
+            if tag_start_offset < (SALT_LENGTH + NONCE_LENGTH):  # Ensure file is large enough for header + tag
                 raise ValueError("Encrypted file is too small or corrupted.")
 
             # Read ciphertext in chunks, but be careful not to read the tag

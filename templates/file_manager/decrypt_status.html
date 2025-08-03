@@ -1,35 +1,54 @@
-<div class="my-2" id="decrypt-dialog-task-status">
-  <p>Decrypting...</p>
-</div>
-<small>{{ task_id }}</small>
-<script>
-  // Polling function to check the status of the decryption task
-  function checkDecryptionStatus() {
-    fetch(`{% url 'dashboard:check_task_status' file_id=file_id %}`)
-      .then(response => response.json())
-      .then(data => {
-        const statusElement = document.getElementById('decrypt-dialog-task-status');
-        statusElement.innerHTML = '';
-        const p_element = document.createElement('p');
-        if (data.status === 'SUCCESS') {
-          // Close the dialog and redirect to download
-          document.getElementById('decrypt-file-dialog').remove();
-          // Redirect to the download URL
-          window.location.href = `{% url 'dashboard:download_decrypted_file' file_id=file_id %}`;
-        } else if (data.status === 'FAILURE') {
-          p_element.textContent = 'Decryption failed. Please try again.';
-        } else {
-          p_element.textContent = `Decryption in progress...`;
-          setTimeout(checkDecryptionStatus, 500); // Poll every 1 second
-        }
-        statusElement.appendChild(p_element);
-      }).catch(error => {
-        console.error('Error checking decryption status:', error);
-        const statusElement = document.getElementById('decrypt-dialog-task-status');
-        statusElement.innerHTML = '<p>Error checking decryption status. Please try again later.</p>';
-      });
-  }
+<dialog id="decrypt-file-dialog">
+  <div class="dialog-header">
+    <p>Decrypting...</p>
+    <button class="btn-ghost aspect-square"
+            onclick="document.getElementById('decrypt-file-dialog').remove()"
+            aria-label="Close dialog">
+      <span class="ic ic-close ic-gray-700"></span>
+    </button>
+  </div>
+  <div class="dialog-content" id="decrypt-file-dialog-content">
+    <div class="my-2" id="decrypt-dialog-task-status">
+      <p>Decrypting...</p>
+      <p>Download will start automatically once decryption is complete.</p>
+    </div>
+    <small>{{ task_id }}</small>
+    <script>
+      // Polling function to check the status of the decryption task
+      function checkDecryptionStatus() {
+        fetch(`{% url 'dashboard:check_task_status' file_id=file_id %}`)
+          .then(response => response.json())
+          .then(data => {
+            const statusElement = document.getElementById('decrypt-dialog-task-status');
+            statusElement.innerHTML = '';
+            const p_element = document.createElement('p');
+            if (data.status === 'SUCCESS') {
+              // Close the dialog and redirect to download
+              document.getElementById('decrypt-file-dialog').remove();
+              // Redirect to the download URL
+              window.location.href = `{% url 'dashboard:download_decrypted_file' file_id=file_id %}`;
+            } else if (data.status === 'FAILURE') {
+              p_element.textContent = 'Decryption failed. Please try again.';
+            } else {
+              p_element.textContent = `Decryption in progress...`;
+              setTimeout(checkDecryptionStatus, 500); // Poll every 1 second
+            }
+            statusElement.appendChild(p_element);
+          }).catch(error => {
+            console.error('Error checking decryption status:', error);
+            const statusElement = document.getElementById('decrypt-dialog-task-status');
+            statusElement.innerHTML = '<p>Error checking decryption status. Please try again later.</p>';
+          });
+      }
 
-  // Start polling when the dialog is opened
-  checkDecryptionStatus();
-</script>
+      // Start polling when the dialog is opened
+      checkDecryptionStatus();
+    </script>
+  </div>
+  <script>
+    // On close, remove the dialog from the DOM
+    document.getElementById('decrypt-file-dialog').addEventListener('close', function() {
+      this.remove();
+    });
+  </script>
+</dialog>

@@ -1,0 +1,30 @@
+**/node_modules
+**/package-lock.json
+**/dist
+**/dist-ssr
+*.local
+
+**/db.sqlite3
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Python
+**/.venv
+**/__pycache__/
+**/migrations/0*.py
+**/media
+
+# misc
+.env
+**/.env.local
+**/.env.development.local
+.env.production.local

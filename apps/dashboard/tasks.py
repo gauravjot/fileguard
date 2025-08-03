@@ -3,23 +3,30 @@ from django.conf import settings
 from celery import shared_task
 from django.db import transaction
 import uuid
+from core.settings import BASE_DIR
 
 from .models import EncryptedFile
 from .crypto import save_encrypted_file_to_disk, decrypt_file_from_disk
 
+KEY_PATH = BASE_DIR / 'config' / 'encryption_key.key'
+
 
 @shared_task(bind=True)
-def perform_encryption_task(self, uploaded_file_path, encrypted_file_id: int, password_raw):
+def perform_encryption_task(self, uploaded_file_path, encrypted_file_id: int):
     """
     Celery task to encrypt a file.
 
     Args:
     uploaded_file_path: Absolute path to the temporary uploaded file.
     original_filename: The original name of the file being encrypted.
-    password_raw: The raw password used for encryption.
     """
     encrypted_file_instance = EncryptedFile.objects.get(id=encrypted_file_id)
     original_filename = encrypted_file_instance.original_filename
+    # Get encryption key
+    if not os.path.exists(KEY_PATH):
+        raise FileNotFoundError("Encryption key file does not exist. Please generate it first.")
+    with open(KEY_PATH, 'rb') as f:
+        password_raw = f.read()
     # Make EncryptedFile object with status='PROCESSING'
     with transaction.atomic():
         encrypted_file_instance.status = 'PROCESSING'
@@ -72,7 +79,7 @@ def perform_encryption_task(self, uploaded_file_path, encrypted_file_id: int, pa
 
 
 @shared_task(bind=True)
-def perform_decryption_task(self, encrypted_file_id, password_raw):
+def perform_decryption_task(self, encrypted_file_id):
     """
     Celery task to decrypt a file.
 
@@ -81,6 +88,12 @@ def perform_decryption_task(self, encrypted_file_id, password_raw):
     password_raw: The raw password used for decryption.
     """
     try:
+        # Get encryption key
+        if not os.path.exists(KEY_PATH):
+            raise FileNotFoundError("Encryption key file does not exist. Please generate it first.")
+        with open(KEY_PATH, 'rb') as f:
+            password_raw = f.read()
+
         with transaction.atomic():
             encrypted_file_instance = EncryptedFile.objects.get(id=encrypted_file_id)
             encrypted_file_instance.status = 'DECRYPTING'

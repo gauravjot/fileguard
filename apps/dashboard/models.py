@@ -142,7 +142,7 @@ def get_home_contents(directory: str = '', sort: str = 'date') -> dict:
     Returns:
         dict: A dictionary containing the subdirectories and files in the home directory.
     """
-    if directory is '' or directory is '0':
+    if directory == '' or directory == '0':
         subdirs = Directory.objects.filter(parent=None)
         files = EncryptedFile.objects.filter(directory=None)
         parent_directory = None

@@ -11,6 +11,7 @@ key.bin
 
 dist/
 build/
+staticfiles/
 
 config/*
 !config/README.md

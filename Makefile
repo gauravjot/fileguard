@@ -23,6 +23,9 @@ getready: venv resetdb
 run:
 	.venv/bin/python manage.py runserver 0.0.0.0:8000
 
+collectstatic:
+	.venv/bin/python manage.py collectstatic --noinput
+
 su:
 	.venv/bin/python manage.py createsuperuser
 
@@ -31,3 +34,7 @@ celery:
 
 generate_key:
 	.venv/bin/python manage.py generate_encryption_key
+
+dockerize:
+	sudo docker rmi fileguard:latest || true
+	sudo docker build -t fileguard:latest .

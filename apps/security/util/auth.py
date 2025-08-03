@@ -74,24 +74,26 @@ def verify_auth(password: str, otp_code: str):
 
     try:
         decrypted_data = cipher.decrypt_and_verify(ciphertext, tag).decode()
-        # format: [hashed password] + [16 length otp secret] + [32 length * 4 backup codes]
-        hashed_password = decrypted_data[:(-1 * (16 + 32 * 4))]
-        otp_secret = decrypted_data[(-1 * (16 + 32 * 4)):(-1 * (32 * 4))]
-        backup_codes = decrypted_data[(-1 * (32 * 4)):]
-        backup_codes = [backup_codes[i:i+32] for i in range(0, len(backup_codes), 32)]
+        # format: [hashed password] + [32 length otp secret] + [64 length * 4 backup codes]
+        hashed_password = decrypted_data[:(-1 * (32 + 64 * 4))]
+        otp_secret = decrypted_data[(-1 * (32 + 64 * 4)):(-1 * (64 * 4))]
+        backup_codes = decrypted_data[(-1 * (64 * 4)):(-64)]
+        backup_codes = [backup_codes[i:i+64] for i in range(0, len(backup_codes), 64)]
 
+        # Verify the password
         if hashed_password != hash_this(password):
             return False
 
+        # Verify the OTP code
         totp = pyotp.TOTP(otp_secret)
         if not totp.verify(otp_code):
             # Check backup codes
-            if otp_code not in backup_codes:
+            if hash_this(otp_code) not in backup_codes:
                 return False
 
         return True
-    except (ValueError, KeyError):
-        return False
+    except (ValueError, KeyError) as e:
+        raise ValueError(f"Error occurred during verification: {e}")
 
 
 def verify_totp(otp_secret: str, otp_code: str) -> bool:

@@ -1,10 +1,16 @@
 {% extends "layouts/base.html" %}
 {% load static %}
-
 {% block title %}
   Login
 {% endblock title %}
-
 {% block content %}
-<h1>Login</h1>
+  <div style="max-width: 400px; margin: 0 auto;" class="w-full">
+    <h1 class="text-3xl font-bold tracking-tight mt-6 mb-4">Login</h1>
+    <p class="text-gray-600 my-4">Enter your credentials to log in.</p>
+    <form method="post" enctype="multipart/form-data" class="w-full">
+      {% csrf_token %}
+      {{ form.as_p }}
+      <button class="btn btn-primary my-2 w-full" type="submit">Log In</button>
+    </form>
+  </div>
 {% endblock content %}

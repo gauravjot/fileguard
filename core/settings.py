@@ -4,19 +4,19 @@ from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = config('DJANGO_SECRET_KEY')
+SECRET_KEY = config('DJANGO_SECRET_KEY', default=os.environ.get('SECRET_KEY'))
 DEBUG = config('DJANGO_DEBUG', default=False, cast=bool)
 
 ALLOWED_HOSTS = ['*']
 
 
 # Celery Configuration
-CELERY_BROKER_URL = config('REDIS') + "/0"  # Adjust if Redis is elsewhere
-CELERY_RESULT_BACKEND = config('REDIS') + "/1"  # Same as broker, or a different one
+CELERY_BROKER_URL = str(config('REDIS', default=os.environ.get('REDIS'))) + "/0"  # Adjust if Redis is elsewhere
+CELERY_RESULT_BACKEND = str(config('REDIS', default=os.environ.get('REDIS'))) + "/1"
 CELERY_ACCEPT_CONTENT = ['json']
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
-CELERY_TIMEZONE = config('TIMEZONE')  # Or your local timezone
+CELERY_TIMEZONE = config('TIMEZONE', default='America/Vancouver')  # Or your local timezone
 
 
 # Application definition
@@ -35,12 +35,16 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+
+    # custom authentication middleware
+    'apps.security.middlewares.ActiveUserMiddleware',
 ]
 
 ROOT_URLCONF = 'core.urls'
@@ -70,11 +74,11 @@ WSGI_APPLICATION = 'core.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': config('DB_NAME'),
-        'USER': config('DB_USERNAME'),
-        'PASSWORD': config('DB_PASSWORD'),
-        'HOST': config('DB_HOST'),
-        'PORT': config('DB_PORT'),
+        'NAME': config('DB_NAME', default=os.environ.get('DB_NAME')),
+        'USER': config('DB_USERNAME', default=os.environ.get('DB_USERNAME')),
+        'PASSWORD': config('DB_PASSWORD', default=os.environ.get('DB_PASSWORD')),
+        'HOST': config('DB_HOST', default=os.environ.get('DB_HOST')),
+        'PORT': config('DB_PORT', default=os.environ.get('DB_PORT')),
     }
 }
 
@@ -113,11 +117,19 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
+STORAGES = {
+    "staticfiles": {
+        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+    },
+}
+
 STATIC_URL = 'static/'
 
 STATICFILES_DIRS = [
-    BASE_DIR / "staticfiles"
+    BASE_DIR / "static",
 ]
+
+STATIC_ROOT = BASE_DIR / "staticfiles"
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')  # Make sure BASE_DIR is defined, typically by default

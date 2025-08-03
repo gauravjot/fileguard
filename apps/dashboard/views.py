@@ -6,22 +6,24 @@ from django.core.files.storage import default_storage
 import os
 import uuid  # For unique temporary filenames
 
-from .forms import EncryptFileForm, DecryptFileForm, CreateDirectoryForm
+from .forms import EncryptFileForm, CreateDirectoryForm
 from .models import EncryptedFile, get_home_contents, Directory
 from .tasks import perform_encryption_task, perform_decryption_task  # Import our Celery tasks
 from celery.result import AsyncResult  # To check task status
+from apps.security.permissions import is_authenticated
 
 
+@is_authenticated()
 def index(request):
     return render(request, 'dashboard.html')
 
 
+@is_authenticated()
 def upload_file_form(request):
     if request.method == 'POST':
         form = EncryptFileForm(request.POST, request.FILES)
         if form.is_valid():
             uploaded_file = form.cleaned_data['file']
-            password = form.cleaned_data['password']
             parent_directory = form.cleaned_data['parent_directory']
 
             # 1. Save the uploaded file temporarily to disk
@@ -51,12 +53,13 @@ def upload_file_form(request):
             )
 
             # 3. Enqueue the encryption task to Celery
-            task = perform_encryption_task.delay(temp_file_path_absolute, pending_file_entry.pk, password)
+            task = perform_encryption_task.delay(temp_file_path_absolute, pending_file_entry.pk)
 
             return redirect('dashboard:list_encrypted_files', directory=parent_directory if parent_directory else '')
     return JsonResponse({'success': False, 'message': 'Invalid form submission.'}, status=400)
 
 
+@is_authenticated()
 def create_directory_form(request):
     if request.method == 'POST':
         form = CreateDirectoryForm(request.POST)
@@ -77,6 +80,7 @@ def create_directory_form(request):
     return JsonResponse({'success': False, 'message': 'Invalid form submission.'}, status=400)
 
 
+@is_authenticated()
 def list_encrypted_files(request, directory=None):
     try:
         create_directory_form = CreateDirectoryForm()
@@ -97,11 +101,13 @@ def list_encrypted_files(request, directory=None):
         raise Http404("Directory not found.")
 
 
+@is_authenticated()
 def list_file_item(request, file_id):
     file_obj = get_object_or_404(EncryptedFile, id=file_id)
     return render(request, 'file_manager/list_file_item.html', {'file': file_obj})
 
 
+@is_authenticated()
 def download_encrypted_file(request, file_id):
     encrypted_file_obj = get_object_or_404(EncryptedFile, id=file_id)
     try:
@@ -113,38 +119,25 @@ def download_encrypted_file(request, file_id):
         raise Http404("Encrypted file not found on disk.")
 
 
+@is_authenticated()
 def decrypt_file(request, file_id):
     encrypted_file_obj = get_object_or_404(EncryptedFile, id=file_id)
 
-    if request.method == 'POST':
-        form = DecryptFileForm(request.POST)
-        if form.is_valid():
-            password = form.cleaned_data['password']\
+    # Enqueue the decryption task
+    task = perform_decryption_task.delay(encrypted_file_obj.id)
 
-            # Enqueue the decryption task
-            task = perform_decryption_task.delay(
-                encrypted_file_obj.id,
-                password
-            )
+    # Update the file's Celery task ID and status for tracking
+    encrypted_file_obj.celery_task_id = task.id
+    encrypted_file_obj.status = 'PENDING_DECRYPTION'  # Or PROCESSING
+    encrypted_file_obj.save()
 
-            # Update the file's Celery task ID and status for tracking
-            encrypted_file_obj.celery_task_id = task.id
-            encrypted_file_obj.status = 'PENDING_DECRYPTION'  # Or PROCESSING
-            encrypted_file_obj.save()
-
-            return render(request, 'file_manager/decrypt_status.html', {
-                'task_id': task.id,
-                'file_id': encrypted_file_obj.pk
-            })
-    else:
-        form = DecryptFileForm()
-
-    return render(request, 'file_manager/decrypt_form.html', {
-        'form': form,
-        'file_obj': encrypted_file_obj
+    return render(request, 'file_manager/decrypt_status.html', {
+        'task_id': task.id,
+        'file_id': encrypted_file_obj.pk
     })
 
 
+@is_authenticated()
 def check_task_status(request, file_id):
     """
     API endpoint to check the status of a Celery task.
@@ -181,6 +174,7 @@ def check_task_status(request, file_id):
         return JsonResponse({'status': task.state, 'message': 'Task is still processing.', 'success': None, 'file': None})
 
 
+@is_authenticated()
 def download_decrypted_file(request, file_id):
     encrypted_file_instance = get_object_or_404(EncryptedFile, id=file_id)
 
