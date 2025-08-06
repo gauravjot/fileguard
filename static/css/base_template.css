@@ -77,6 +77,9 @@
 	--sizing-9: 2.25rem;
 	--sizing-9\.5: 2.375rem;
 	--sizing-10: 2.5rem;
+
+	--breakpoint-tablet: 768px;
+	--breakpoint-desktop: 1280px;
 }
 .dark {
 	--color-foreground: #fff;
@@ -2740,4 +2743,182 @@ h6 {
 }
 .font-mono {
 	font-family: var(--font-mono);
+}
+
+.grid-cols-1 {
+	grid-template-columns: repeat(1, minmax(0, 1fr));
+}
+.grid-cols-2 {
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.grid-cols-3 {
+	grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+.grid-cols-4 {
+	grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+.grid-cols-5 {
+	grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+.grid-cols-6 {
+	grid-template-columns: repeat(6, minmax(0, 1fr));
+}
+.grid-cols-7 {
+	grid-template-columns: repeat(7, minmax(0, 1fr));
+}
+.grid-cols-8 {
+	grid-template-columns: repeat(8, minmax(0, 1fr));
+}
+.grid-cols-9 {
+	grid-template-columns: repeat(9, minmax(0, 1fr));
+}
+.grid-cols-10 {
+	grid-template-columns: repeat(10, minmax(0, 1fr));
+}
+.grid-cols-11 {
+	grid-template-columns: repeat(11, minmax(0, 1fr));
+}
+.grid-cols-12 {
+	grid-template-columns: repeat(12, minmax(0, 1fr));
+}
+.col-span-1 {
+	grid-column: span 1;
+}
+.col-span-2 {
+	grid-column: span 2;
+}
+.col-span-3 {
+	grid-column: span 3;
+}
+.col-span-4 {
+	grid-column: span 4;
+}
+.col-span-5 {
+	grid-column: span 5;
+}
+.col-span-6 {
+	grid-column: span 6;
+}
+@media (max-width: 767px) {
+	.hidden-mobile {
+		display: none;
+	}
+	.mobile\:grid-cols-1 {
+		grid-template-columns: repeat(1, minmax(0, 1fr));
+	}
+	.mobile\:grid-cols-2 {
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+	}
+	.mobile\:grid-cols-3 {
+		grid-template-columns: repeat(3, minmax(0, 1fr));
+	}
+	.mobile\:grid-cols-4 {
+		grid-template-columns: repeat(4, minmax(0, 1fr));
+	}
+	.mobile\:grid-cols-5 {
+		grid-template-columns: repeat(5, minmax(0, 1fr));
+	}
+	.mobile\:grid-cols-6 {
+		grid-template-columns: repeat(6, minmax(0, 1fr));
+	}
+	.mobile\:grid-cols-7 {
+		grid-template-columns: repeat(7, minmax(0, 1fr));
+	}
+	.mobile\:grid-cols-8 {
+		grid-template-columns: repeat(8, minmax(0, 1fr));
+	}
+	.mobile\:grid-cols-9 {
+		grid-template-columns: repeat(9, minmax(0, 1fr));
+	}
+	.mobile\:grid-cols-10 {
+		grid-template-columns: repeat(10, minmax(0, 1fr));
+	}
+	.mobile\:grid-cols-11 {
+		grid-template-columns: repeat(11, minmax(0, 1fr));
+	}
+	.mobile\:grid-cols-12 {
+		grid-template-columns: repeat(12, minmax(0, 1fr));
+	}
+	.mobile\:col-span-1 {
+		grid-column: span 1;
+	}
+	.mobile\:col-span-2 {
+		grid-column: span 2;
+	}
+	.mobile\:col-span-3 {
+		grid-column: span 3;
+	}
+	.mobile\:col-span-4 {
+		grid-column: span 4;
+	}
+	.mobile\:col-span-5 {
+		grid-column: span 5;
+	}
+	.mobile\:col-span-6 {
+		grid-column: span 6;
+	}
+}
+@media ((min-width: 768px) and (max-width: 1279px)) {
+	.hidden-tablet {
+		display: none;
+	}
+	.tablet\:grid-cols-1 {
+		grid-template-columns: repeat(1, minmax(0, 1fr));
+	}
+	.tablet\:grid-cols-2 {
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+	}
+	.tablet\:grid-cols-3 {
+		grid-template-columns: repeat(3, minmax(0, 1fr));
+	}
+	.tablet\:grid-cols-4 {
+		grid-template-columns: repeat(4, minmax(0, 1fr));
+	}
+	.tablet\:grid-cols-5 {
+		grid-template-columns: repeat(5, minmax(0, 1fr));
+	}
+	.tablet\:grid-cols-6 {
+		grid-template-columns: repeat(6, minmax(0, 1fr));
+	}
+	.tablet\:grid-cols-7 {
+		grid-template-columns: repeat(7, minmax(0, 1fr));
+	}
+	.tablet\:grid-cols-8 {
+		grid-template-columns: repeat(8, minmax(0, 1fr));
+	}
+	.tablet\:grid-cols-9 {
+		grid-template-columns: repeat(9, minmax(0, 1fr));
+	}
+	.tablet\:grid-cols-10 {
+		grid-template-columns: repeat(10, minmax(0, 1fr));
+	}
+	.tablet\:grid-cols-11 {
+		grid-template-columns: repeat(11, minmax(0, 1fr));
+	}
+	.tablet\:grid-cols-12 {
+		grid-template-columns: repeat(12, minmax(0, 1fr));
+	}
+	.tablet\:col-span-1 {
+		grid-column: span 1;
+	}
+	.tablet\:col-span-2 {
+		grid-column: span 2;
+	}
+	.tablet\:col-span-3 {
+		grid-column: span 3;
+	}
+	.tablet\:col-span-4 {
+		grid-column: span 4;
+	}
+	.tablet\:col-span-5 {
+		grid-column: span 5;
+	}
+	.tablet\:col-span-6 {
+		grid-column: span 6;
+	}
+}
+@media (min-width: 1280px) {
+	.hidden-desktop {
+		display: none;
+	}
 }

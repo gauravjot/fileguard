@@ -1,6 +1,22 @@
 {# djlint:off H021,H023 #}
-<div class="flex justify-between place-items-center items-center my-3"
-     style="top:4.5rem">
+<div class="hidden-tablet hidden-desktop">
+  <div class="flex place-items-center gap-2 flex-wrap p-2 bg-gray-200 small">
+    {% for crumb in breadcrumbs %}
+      <button hx-get="{% url 'dashboard:list_encrypted_files' directory=crumb.id %}"
+              hx-swap="innerHTML"
+              hx-target="#directory_contents"
+              class="btn-link-black btn-sm inline-block">{{ crumb.name }}</button>
+      {% if not forloop.last %}<span class="ic-md ic-chevron-right ic-gray-50"></span>{% endif %}
+    {% endfor %}
+  </div>
+  <div class="text-right m-2">
+    <button hx-on:click="document.getElementById('create-directory-dialog').showModal()"
+            class="btn-ghost btn-sm">Create Directory</button>
+    <button hx-on:click="document.getElementById('upload-file-dialog').showModal()"
+            class="btn-primary btn-sm">Upload File</button>
+  </div>
+</div>
+<div class="flex justify-between place-items-center items-center my-3 px-2 hidden-mobile">
   <div class="flex place-items-center gap-2">
     {% for crumb in breadcrumbs %}
       <button hx-get="{% url 'dashboard:list_encrypted_files' directory=crumb.id %}"
@@ -15,64 +31,59 @@
     <button id="openDialogBtn"
             hx-on:click="document.getElementById('create-directory-dialog').showModal()"
             class="btn-ghost btn-md">Create Directory</button>
-    <dialog id="create-directory-dialog">
-      <div class="dialog-header">
-        <h2>Creating new Directory</h2>
-        <button class="dialog-close-button"
-                hx-on:click="document.getElementById('create-directory-dialog').close()">&times;</button>
-      </div>
-      <div class="dialog-content">
-        <form hx-post="{% url 'dashboard:create_directory_form' %}"
-              hx-swap="innerHTML"
-              hx-target="#directory_contents"
-              class="w-full">
-          {% csrf_token %}
-          {{ create_directory_form.as_p }}
-          <button type="submit" class="btn-primary">Create Directory</button>
-        </form>
-      </div>
-    </dialog>
     <!-- Upload -->
     <button id="openUploadDialogBtn"
             hx-on:click="document.getElementById('upload-file-dialog').showModal()"
             class="btn-primary btn-md">Upload File</button>
-    <dialog id="upload-file-dialog">
-      <div class="dialog-header">
-        <h2>Upload File</h2>
-        <button class="dialog-close-button"
-                hx-on:click="document.getElementById('upload-file-dialog').close()">&times;</button>
-      </div>
-      <div class="dialog-content">
-        <form hx-post="{% url 'dashboard:upload_file_form' %}"
-              hx-target="#directory_contents"
-              hx-swap="innerHTML"
-              enctype="multipart/form-data">
-          {% csrf_token %}
-          {{ upload_file_form.as_p }}
-          <button type="submit" class="btn-primary">Encrypt & Upload</button>
-        </form>
-      </div>
-    </dialog>
   </div>
 </div>
+<dialog id="create-directory-dialog">
+  <div class="dialog-header">
+    <h2>Creating new Directory</h2>
+    <button class="dialog-close-button"
+            hx-on:click="document.getElementById('create-directory-dialog').close()">&times;</button>
+  </div>
+  <div class="dialog-content">
+    <form hx-post="{% url 'dashboard:create_directory_form' %}"
+          hx-swap="innerHTML"
+          hx-target="#directory_contents"
+          class="w-full">
+      {% csrf_token %}
+      {{ create_directory_form.as_p }}
+      <button type="submit" class="btn-primary">Create Directory</button>
+    </form>
+  </div>
+</dialog>
+<dialog id="upload-file-dialog">
+  <div class="dialog-header">
+    <h2>Upload File</h2>
+    <button class="dialog-close-button"
+            hx-on:click="document.getElementById('upload-file-dialog').close()">&times;</button>
+  </div>
+  <div class="dialog-content">
+    <form hx-post="{% url 'dashboard:upload_file_form' %}"
+          hx-target="#directory_contents"
+          hx-swap="innerHTML"
+          enctype="multipart/form-data">
+      {% csrf_token %}
+      {{ upload_file_form.as_p }}
+      <button type="submit" class="btn-primary">Encrypt & Upload</button>
+    </form>
+  </div>
+</dialog>
 <!-- Directory Contents -->
-<div class="flex-1 flex flex-col" style="overflow:hidden">
-  <div class="grid border-b border-gray-400 pb-2 pt-3"
-       style="grid-template-columns: repeat(12, 1fr);
-              gap: 20px">
-    <div class="font-medium" style="grid-column: span 4;">Name</div>
-    <div class="font-medium" style="grid-column: span 2;">Date</div>
-    <div class="font-medium" style="grid-column: span 2;">Size</div>
-    <div class="font-medium" style="grid-column: span 4;">Actions</div>
+<div class="flex-1 flex flex-col px-2" style="overflow:hidden">
+  <div class="grid border-b border-gray-400 pb-2 pt-3 px-1 grid-cols-8 mobile:grid-cols-7 gap-4 text-sm">
+    <div class="font-medium col-span-4 mobile:col-span-5">Name</div>
+    <div class="font-medium hidden-mobile col-span-3">Date</div>
+    <div class="font-medium col-span-1">Size</div>
   </div>
   <div class="flex-1" style="overflow-y: auto;">
     <!-- Directories and Files -->
     {% if files or subdirectories %}
       {% for subdir in subdirectories %}
-        <div class="grid border-b border-gray-200 py-3 text-sm hover-opaque px-1"
-             style="grid-template-columns: repeat(12, 1fr);
-                    gap: 20px">
-          <div class="pl-2" style="grid-column: span 4;">
+        <div class="grid border-b border-gray-200 py-3 text-sm hover-opaque px-1 grid-cols-8 mobile:grid-cols-7 gap-4">
+          <div class="col-span-4 mobile:col-span-5">
             <button hx-get="{% url 'dashboard:list_encrypted_files' directory=subdir.pk %}"
                     hx-swap="innerhtml"
                     hx-target="#directory_contents"
@@ -80,9 +91,8 @@
               <span class="ic ic-gray-75 ic-folder mr-3"></span>{{ subdir.name }}
             </button>
           </div>
-          <div style="grid-column: span 2;">{{ subdir.created_on|date:"Y-m-d H:i" }}</div>
-          <div style="grid-column: span 2;"></div>
-          <div style="grid-column: span 4;"></div>
+          <div class="hidden-mobile col-span-3">{{ subdir.created_on|date:"Y-m-d H:i" }}</div>
+          <div class="col-span-1"></div>
         </div>
       {% endfor %}
       <div id="file-list">

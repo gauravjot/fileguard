@@ -7,6 +7,11 @@ from .permissions import is_authenticated
 
 def login_page(request):
     if is_pass_file_present():
+        # Check if the user is already authenticated
+        session = request.active_session
+        if session and session.is_valid:
+            return redirect('dashboard:index')
+        # If not authenticated, show the login form
         form = LoginForm(request.POST or None)
         if request.method == "POST" and form.is_valid():
             # is_valid() process the authentication, now we set a session cookie
@@ -20,7 +25,7 @@ def login_page(request):
                 value=key,
                 expires=session.expire_at,
                 httponly=True,
-                secure=True,
+                secure=False,  # Set to True if using HTTPS and hosting on a secure server
                 samesite='Lax',
                 domain=request.get_host().split(':')[0]
             )
