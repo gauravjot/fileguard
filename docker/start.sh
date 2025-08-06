@@ -23,7 +23,7 @@ else
   echo "\nConfig folder exists, checking for encryption key..."
 fi
 # Check if encryption key exists in config folder
-if [ ! -f /opt/fileguard/config/encryption_key.txt ]; then
+if [ ! -f /opt/fileguard/config/encryption_key.key ]; then
   echo "-- Encryption key not found, generating a new one..."
   python manage.py generate_encryption_key
 else
