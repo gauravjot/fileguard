@@ -1,3 +1,4 @@
+{# djlint:off H021 #}
 {% extends "layouts/base.html" %}
 {% load static %}
 {% block title %}
@@ -10,4 +11,69 @@
        class="flex flex-1 flex-col"
        style="overflow:hidden"
        id="directory_contents"></div>
+  <!-- track state of file uploads -->
+  <script>
+    // make a oberservable to detect changes in the file list
+    const observer = new MutationObserver((mutations) => {
+      mutations.forEach(mutation => {
+        if (mutation.type === 'childList') {
+          const fileElements = document.querySelectorAll('[data-status="PROCESSING"], [data-status="PENDING"]');
+          if (fileElements.length === 0) {
+            return;
+          }
+          fileElements.forEach(el => {
+            // if mutation has triggered before then dont retrigger
+            if (el.getAttribute('data-status') === 'SUCCESS' || el.getAttribute('data-status') === 'FAILED') {
+              return;
+            }
+            // add skeleton-shimmer class
+            el.classList.add('skeleton-shimmer');
+            // every 1 second, poll the server for update
+            file_id = el.getAttribute('data-file-id');
+            const intervalId = setInterval(() => {
+              fetch(`/dashboard/task_status/${file_id}/`)
+                .then(response => response.json())
+                .then(data => {
+                  if (data.status === 'SUCCESS') {
+                    el.classList.remove('skeleton-shimmer');
+                    el.setAttribute('data-status', 'SUCCESS');
+                  } else if (data.status === 'FAILED') {
+                    el.classList.remove('skeleton-shimmer');
+                    el.classList.add('text-red-500');
+                    el.setAttribute('data-status', 'FAILED');
+                  }
+                  // stop polling
+                  clearInterval(intervalId);
+                  if (data.status !== 'SUCCESS' && data.status != 'FAILED') {
+                    return; // continue polling
+                  }
+                  // refetch the item row to update the UI
+                  reload_item_row(file_id);
+                });
+            }, 1000); // Poll every second
+          });
+        }
+      });
+    });
+    // Start observing the directory contents for changes
+    const directoryContents = document.getElementById('directory_contents');
+    if (directoryContents) {
+      observer.observe(directoryContents, {
+        childList: true,
+        subtree: true
+      });
+    }
+
+    function reload_item_row(fileId) {
+      const fileRow = document.querySelector(`[data-file-id="${fileId}"]`);
+      if (fileRow) {
+        fetch(`/dashboard/file/${fileId}/`)
+          .then(response => response.text())
+          .then(html => {
+            // replace fileRow
+            fileRow.outerHTML = html;
+          });
+      }
+    }
+  </script>
 {% endblock content %}

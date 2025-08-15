@@ -1,4 +1,4 @@
-{# djlint:off H021,H006 #}
+{# djlint:off H021,H006,H030,H031 #}
 {% load static %}
 <!DOCTYPE html>
 <html lang="en">
@@ -35,7 +35,7 @@
                     width: auto"
              class="logo" />
         {% if request.active_session.is_valid %}
-          <form method="POST" action="{% url 'security:logout' %}">
+          <form method="post" action="{% url 'security:logout' %}">
             {% csrf_token %}
             <button type="submit" class="btn btn-sm">
               <span class="icon icon-logout"></span>

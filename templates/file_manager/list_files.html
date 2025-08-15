@@ -1,4 +1,16 @@
 {# djlint:off H021,H023 #}
+<form hx-post="{% url 'dashboard:upload_file_form' %}"
+      hx-target="#directory_contents"
+      hx-swap="innerHTML"
+      hx-trigger="customDragDropTrigger"
+      id="fileguard_dragdrop_form"
+      action="{% url 'dashboard:upload_file_form' %}"
+      enctype="multipart/form-data"
+      class="hidden">
+  {% csrf_token %}
+  <input type="file" id="fileguard_dragdrop_fileinput" name="file" />
+  <input type="hidden" name="parent_directory" value="{{ directory }}" />
+</form>
 <div class="hidden-tablet hidden-desktop">
   <div class="flex place-items-center gap-2 flex-wrap p-2 bg-gray-200 small">
     {% for crumb in breadcrumbs %}
@@ -72,7 +84,9 @@
   </div>
 </dialog>
 <!-- Directory Contents -->
-<div class="flex-1 flex flex-col px-2" style="overflow:hidden">
+<div class="flex-1 flex flex-col px-2"
+     style="overflow:hidden"
+     id="fileguard_dragdrop">
   <div class="grid border-b border-gray-400 pb-2 pt-3 px-1 grid-cols-8 mobile:grid-cols-7 gap-4 text-sm">
     <div class="font-medium col-span-4 mobile:col-span-5">Name</div>
     <div class="font-medium hidden-mobile col-span-3">Date</div>
@@ -105,68 +119,41 @@
     <div class="border-b border-gray-200 py-3 text-sm text-gray-600">Directory is empty</div>
   {% endif %}
 </div>
-<!-- track state of file uploads -->
 <script>
-    // make a oberservable to detect changes in the file list
-    const observer = new MutationObserver((mutations) => {
-      mutations.forEach(mutation => {
-        if (mutation.type === 'childList') {
-          const fileElements = document.querySelectorAll('[data-status="PROCESSING"], [data-status="PENDING"]');
-          if (fileElements.length === 0) {
-            return;
-          }
-          fileElements.forEach(el => {
-            // if mutation has triggered before then dont retrigger
-            if (el.getAttribute('data-status') === 'SUCCESS' || el.getAttribute('data-status') === 'FAILED') {
-              return;
-            }
-            // add skeleton-shimmer class
-            el.classList.add('skeleton-shimmer');
-            // every 1 second, poll the server for update
-            file_id = el.getAttribute('data-file-id');
-            const intervalId = setInterval(() => {
-              fetch(`/dashboard/task_status/${file_id}/`)
-                .then(response => response.json())
-                .then(data => {
-                  if (data.status === 'SUCCESS') {
-                    el.classList.remove('skeleton-shimmer');
-                    el.setAttribute('data-status', 'SUCCESS');
-                  } else if (data.status === 'FAILED') {
-                    el.classList.remove('skeleton-shimmer');
-                    el.classList.add('text-red-500');
-                    el.setAttribute('data-status', 'FAILED');
-                  }
-                  // stop polling
-                  clearInterval(intervalId);
-                  if (data.status !== 'SUCCESS' && data.status != 'FAILED') {
-                    return; // continue polling
-                  }
-                  // refetch the item row to update the UI
-                  reload_item_row(file_id);
-                });
-            }, 1000); // Poll every second
+    // file drag and drop upload
+    if (document.getElementById("fileguard_dragdrop")) {
+      document.getElementById("fileguard_dragdrop").addEventListener("drop", (event) => {
+        event.preventDefault();
+        document.getElementById("fileguard_dragdrop").classList.remove("dragover");
+        const dragDropForm = document.getElementById("fileguard_dragdrop_form");
+        const dragDropFileInput = document.getElementById("fileguard_dragdrop_fileinput");
+        if (event.dataTransfer.files) {
+          // Create a new DataTransfer object
+          const dataTransfer = new DataTransfer();
+          [...event.dataTransfer.files].forEach((file, i) => {
+            // Add the dropped file to the DataTransfer object's items
+            dataTransfer.items.add(file);
           });
+          dragDropFileInput.files = dataTransfer.files;
+          // Trigger HTMX hx-post
+          dragDropForm.dispatchEvent(new CustomEvent('customDragDropTrigger'));
         }
       });
-    });
-    // Start observing the directory contents for changes
-    const directoryContents = document.getElementById('directory_contents');
-    if (directoryContents) {
-      observer.observe(directoryContents, {
-        childList: true,
-        subtree: true
+      // prevent dragover event
+      document.getElementById("fileguard_dragdrop").addEventListener("dragover", (event) => {
+        event.preventDefault();
       });
-    }
-
-    function reload_item_row(fileId) {
-      const fileRow = document.querySelector(`[data-file-id="${fileId}"]`);
-      if (fileRow) {
-        fetch(`/dashboard/file/${fileId}/`)
-          .then(response => response.text())
-          .then(html => {
-            // replace fileRow
-            fileRow.outerHTML = html;
-          });
-      }
+      // Add a class on dragover to provide visual feedback
+      document.getElementById("fileguard_dragdrop").addEventListener("dragover", (event) => {
+        // You must prevent the default behavior to allow a drop
+        event.preventDefault();
+        document.getElementById("fileguard_dragdrop").classList.add("dragover");
+      });
+      // Remove the class when the file leaves the drop zone
+      document.getElementById("fileguard_dragdrop").addEventListener("dragleave", (event) => {
+        document.getElementById("fileguard_dragdrop").classList.remove("dragover");
+      });
+    } else {
+      console.error("File drag and drop not initialized.");
     }
 </script>

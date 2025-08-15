@@ -20,6 +20,7 @@ def index(request):
 
 @is_authenticated()
 def upload_file_form(request):
+    errors = []
     if request.method == 'POST':
         form = EncryptFileForm(request.POST, request.FILES)
         if form.is_valid():
@@ -56,7 +57,9 @@ def upload_file_form(request):
             task = perform_encryption_task.delay(temp_file_path_absolute, pending_file_entry.pk)
 
             return redirect('dashboard:list_encrypted_files', directory=parent_directory if parent_directory else '')
-    return JsonResponse({'success': False, 'message': 'Invalid form submission.'}, status=400)
+        else:
+            errors = form.errors
+    return JsonResponse({'success': False, 'message': 'Invalid form submission.', 'errors': errors}, status=400)
 
 
 @is_authenticated()
@@ -94,6 +97,7 @@ def list_encrypted_files(request, directory=None):
             {
                 'create_directory_form': create_directory_form,
                 'upload_file_form': upload_file_form,
+                'directory': directory,
                 'breadcrumbs': Directory.objects.get(pk=directory).get_breadcrumbs() if directory and int(directory) > 0 else [Directory(name='/', parent=None)],
                 **get_home_contents(directory=directory if directory is not None else '', sort='name')
             })
