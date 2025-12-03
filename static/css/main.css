@@ -133,8 +133,6 @@ form .errorlist li {
 }
 
 .skeleton-shimmer {
-	position: relative;
-	overflow: hidden;
 	background: linear-gradient(
 		to right,
 		transparent 0%,

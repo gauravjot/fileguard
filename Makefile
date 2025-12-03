@@ -21,7 +21,7 @@ superuser:
 getready: venv resetdb
 
 run:
-	.venv/bin/python manage.py runserver 0.0.0.0:8000
+	.venv/bin/python manage.py runserver 0.0.0.0:8150 & .venv/bin/celery -A core worker -l info
 
 collectstatic:
 	.venv/bin/python manage.py collectstatic --noinput

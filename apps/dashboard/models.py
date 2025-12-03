@@ -2,12 +2,17 @@ import os
 import json
 from django.db import models
 from django.core import serializers
+from django.utils.timezone import now
 
 
 class Directory(models.Model):
     name = models.CharField(max_length=255, unique=True)
     parent = models.ForeignKey('self', on_delete=models.CASCADE, related_name='subdirectories', blank=True, null=True)
     created_on = models.DateTimeField(auto_now_add=True)
+    mark_deleted = models.BooleanField(
+        default=False, help_text="Mark this directory for deletion without removing it immediately")
+    mark_deleted_date = models.DateTimeField(
+        blank=True, null=True, help_text="Date when the directory was marked for deletion")
 
     def __str__(self):
         return self.name
@@ -16,8 +21,8 @@ class Directory(models.Model):
         """
         Returns a list of files and subdirectories in this directory.
         """
-        files = EncryptedFile.objects.filter(directory=self)
-        subdirs = self.__class__.objects.filter(parent=self)
+        files = EncryptedFile.objects.filter(directory=self, mark_deleted=False)
+        subdirs = self.__class__.objects.filter(parent=self, mark_deleted=False)
         return {
             'files': files,
             'subdirectories': subdirs
@@ -28,7 +33,7 @@ class Directory(models.Model):
         Returns a list of all subdirectories in this directory and its subdirectories.
         """
         descendants = []
-        subdirs = self.__class__.objects.filter(parent=self)
+        subdirs = self.__class__.objects.filter(parent=self, mark_deleted=False)
         for subdir in subdirs:
             descendants.append(subdir)
             descendants.extend(subdir.get_descendants())
@@ -74,12 +79,22 @@ class Directory(models.Model):
                 raise ValueError(f"Directory '{name}' already exists at the root level")
         return super().objects.create(name=name, parent=parent)
 
+    def mark_for_deletion(self):
+        self.mark_deleted = True
+        self.mark_deleted_date = now()
+        self.save()
+
     def delete(self, *args, **kwargs):
+        """
+        Permanently delete the directory and all its content from database and file system.
+        """
         # Delete all files in this directory before deleting the directory itself
         files = EncryptedFile.objects.filter(directory=self)
         if files.exists():
+            # Delete from FS
             for file in files:
                 file.delete()
+        files.delete()
         # Now delete the directory
         return super().delete(*args, **kwargs)
 
@@ -102,6 +117,10 @@ class EncryptedFile(models.Model):
                               choices=[('PENDING', 'Pending'), ('PROCESSING', 'Processing'),
                                        ('COMPLETED', 'Completed'), ('FAILED', 'Failed'), ('DECRYPTING', 'Decrypting'), ('DECRYPTED', 'Decrypted')])
     decrypted_temp_path = models.CharField(max_length=255, blank=True, null=True)
+    mark_deleted = models.BooleanField(
+        default=False, help_text="Mark this file for deletion without removing it immediately")
+    mark_deleted_date = models.DateTimeField(
+        blank=True, null=True, help_text="Date when the file was marked for deletion")
 
     def __str__(self):
         return self.original_filename
@@ -113,6 +132,11 @@ class EncryptedFile(models.Model):
     def get_decryption_url(self):
         from django.urls import reverse
         return reverse('dashboard:decrypt_file', args=[str(self.pk)])
+
+    def mark_for_deletion(self):
+        self.mark_deleted = True
+        self.mark_deleted_date = now()
+        self.save()
 
     def delete(self, *args, **kwargs):
         # Delete the actual file when the model instance is deleted
@@ -143,12 +167,12 @@ def get_home_contents(directory: str = '', sort: str = 'date') -> dict:
         dict: A dictionary containing the subdirectories and files in the home directory.
     """
     if directory == '' or directory == '0':
-        subdirs = Directory.objects.filter(parent=None)
-        files = EncryptedFile.objects.filter(directory=None)
+        subdirs = Directory.objects.filter(parent=None, mark_deleted=False)
+        files = EncryptedFile.objects.filter(directory=None, mark_deleted=False)
         parent_directory = None
     else:
         directory_id_parsed = int(directory)
-        directory_obj = Directory.objects.filter(pk=directory_id_parsed).first()
+        directory_obj = Directory.objects.filter(pk=directory_id_parsed, mark_deleted=False).first()
         if not directory_obj:
             raise ValueError(f"Directory with ID {directory_id_parsed} does not exist.")
         contents = directory_obj.get_contents()
