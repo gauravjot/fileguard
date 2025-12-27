@@ -25,7 +25,6 @@ config/*
 # Python
 **/.venv
 **/__pycache__/
-**/migrations/0*.py
 **/media
 
 # misc

@@ -38,3 +38,7 @@ generate_key:
 dockerize:
 	sudo docker rmi fileguard:latest || true
 	sudo docker build -t fileguard:latest .
+
+docker_push:
+	sudo docker tag fileguard:latest gauravjot/fileguard:latest
+	sudo docker push gauravjot/fileguard:latest

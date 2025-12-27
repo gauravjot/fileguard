@@ -18,7 +18,7 @@ config/*
 
 # django
 __pycache__/
-migrations/
+#migrations/
 *.egg-info
 
 media/decrypted_temp
