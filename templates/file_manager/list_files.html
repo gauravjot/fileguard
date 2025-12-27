@@ -96,17 +96,54 @@
     <!-- Directories and Files -->
     {% if files or subdirectories %}
       {% for subdir in subdirectories %}
-        <div class="grid border-b border-gray-200 py-3 text-sm hover-opaque px-1 grid-cols-8 mobile:grid-cols-7 gap-4">
+        <div id="dir-{{ subdir.pk }}"
+             class="grid align-items-center border-b border-gray-200 py-2 text-sm hover-opaque px-1 grid-cols-8 mobile:grid-cols-7 gap-4">
           <div class="col-span-4 mobile:col-span-5">
             <button hx-get="{% url 'dashboard:list_encrypted_files' directory=subdir.pk %}"
                     hx-swap="innerhtml"
                     hx-target="#directory_contents"
-                    class="btn-link-black font-medium text-sm w-full text-left flex place-items-center">
+                    class="btn-link-black justify-start font-medium text-sm w-full text-left flex place-items-center">
               <span class="ic ic-gray-75 ic-folder mr-3"></span>{{ subdir.name }}
             </button>
           </div>
           <div class="hidden-mobile col-span-3">{{ subdir.created_on|date:"Y-m-d H:i" }}</div>
-          <div class="col-span-1"></div>
+          <div class="col-span-1 justify-between flex place-items-center">
+            <div></div>
+            <div class="mr-2 relative">
+              <button class="btn btn-sm btn-link-black hover-opaque"
+                      style="height:24px;
+                             width:24px"
+                      id="dir-{{ subdir.pk }}-options">
+                <span class="ic ic-options-vertical"></span>
+              </button>
+              <div class="absolute right-0 hidden z-10 bg-white border border-gray-300 rounded-2 shadow"
+                   id="dir-{{ subdir.pk }}-options-menu"
+                   style="min-width: 10rem">
+                <div class="py-1">
+                  <button hx-delete="{% url 'dashboard:mark_directory_for_deletion' directory_id=subdir.pk %}"
+                          hx-confirm="Are you sure you want to delete '{{ subdir.name }}'?"
+                          hx-target="#dir-{{ subdir.pk }}"
+                          hx-swap="outerHTML"
+                          class="btn btn-danger-ghost btn-md justify-start w-full text-left">
+                    <span class="ic ic-delete mr-2 ic-danger"></span>
+                    <span>Delete</span>
+                  </button>
+                </div>
+              </div>
+              <script type="text/javascript">
+          document.getElementById('dir-{{ subdir.pk }}-options').addEventListener('click', function(event) {
+            event.preventDefault();
+            document.getElementById('dir-{{ subdir.pk }}-options-menu').classList.toggle('hidden');
+          });
+
+          document.addEventListener('click', function(event) {
+            if (!document.getElementById('dir-{{ subdir.pk }}-options').contains(event.target) && !document.getElementById('dir-{{ subdir.pk }}-options-menu').contains(event.target)) {
+              document.getElementById('dir-{{ subdir.pk }}-options-menu').classList.add('hidden');
+            }
+          });
+              </script>
+            </div>
+          </div>
         </div>
       {% endfor %}
       <div id="file-list">

@@ -54,7 +54,7 @@ def upload_file_form(request):
             )
 
             # 3. Enqueue the encryption task to Celery
-            task = perform_encryption_task.delay(temp_file_path_absolute, pending_file_entry.pk)
+            perform_encryption_task.delay(temp_file_path_absolute, pending_file_entry.pk)
 
             return redirect('dashboard:list_encrypted_files', directory=parent_directory if parent_directory else '')
         else:
@@ -222,3 +222,23 @@ def download_decrypted_file(request, file_id):
     response.close = file_cleanup  # Attach cleanup callback
 
     return response
+
+
+@is_authenticated()
+def mark_file_for_deletion(request, file_id):
+    if request.method == 'DELETE':
+        encrypted_file_instance = get_object_or_404(EncryptedFile, id=file_id)
+        encrypted_file_instance.mark_for_deletion()
+        # render empty response for HTMX to swap out
+        return HttpResponse('', status=200)
+    return JsonResponse({'success': False, 'message': 'Invalid request method.'}, status=400)
+
+
+@is_authenticated()
+def mark_directory_for_deletion(request, directory_id):
+    if request.method == 'DELETE':
+        directory_instance = get_object_or_404(Directory, id=directory_id)
+        directory_instance.mark_for_deletion()
+        # render empty response for HTMX to swap out
+        return HttpResponse('', status=200)
+    return JsonResponse({'success': False, 'message': 'Invalid request method.'}, status=400)

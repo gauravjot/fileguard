@@ -1,5 +1,6 @@
 {# djlint:off H021,H023 #}
 <div class="grid border-b border-gray-300 py-2 align-items-center text-sm hover-opaque px-1 grid-cols-8 mobile:grid-cols-7 gap-4"
+     id="file-item-{{ file.id }}"
      aria-label="File: {{ file.original_filename }}"
      data-status="{{ file.status }}"
      data-file-id="{{ file.id }}"
@@ -8,7 +9,7 @@
     <span class="ic ic-file ic-{{ file.extension }} mr-3 ic-gray-75"></span>
     <div>
       {% if file.status == 'COMPLETED' or file.status == 'DECRYPTED' %}
-        <button class="btn-link-black font-medium text-sm w-full text-left truncate overflow-ellipsis"
+        <button class="btn-link-black justify-start font-medium text-sm w-full text-left truncate overflow-ellipsis"
                 hx-get="{% url 'dashboard:decrypt_file' file_id=file.id %}"
                 hx-swap="beforeend"
                 hx-target="#decrypt-file-dialog-container"
@@ -45,10 +46,22 @@
            id="file-{{ file.id }}-options-menu"
            style="min-width: 10rem">
         <div class="py-1">
-          <a href="#"
-             class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Download</a>
-          <a href="#"
-             class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Delete</a>
+          <button hx-get="{% url 'dashboard:decrypt_file' file_id=file.id %}"
+                  hx-swap="beforeend"
+                  hx-target="#decrypt-file-dialog-container"
+                  hx-on::before-request="document.querySelectorAll('#decrypt-file-dialog').forEach(dialog => { if (dialog.open) { dialog.close(); } dialog.remove(); }); "
+                  class="btn btn-ghost btn-md justify-start w-full text-left">
+            <span class="ic ic-download mr-2"></span>
+            <span>Download</span>
+          </button>
+          <button hx-delete="{% url 'dashboard:mark_file_for_deletion' file_id=file.id %}"
+                  hx-confirm="Are you sure you want to delete '{{ file.original_filename }}'?"
+                  hx-target="#file-item-{{ file.id }}"
+                  hx-swap="outerHTML"
+                  class="btn btn-danger-ghost btn-md justify-start w-full text-left">
+            <span class="ic ic-delete mr-2 ic-danger"></span>
+            <span>Delete</span>
+          </button>
         </div>
       </div>
       <script type="text/javascript">

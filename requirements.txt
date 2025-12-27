@@ -8,7 +8,7 @@ click-plugins==1.1.1.2
 click-repl==0.3.0
 colorama==0.4.6
 cssbeautifier==1.15.4
-Django==5.2.4
+Django==5.2.9
 django-cors-headers==4.7.0
 djlint==1.36.4
 EditorConfig==0.17.1

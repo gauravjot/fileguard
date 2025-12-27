@@ -2480,34 +2480,34 @@ h6 {
 	place-items: stretch;
 }
 .justify-center {
-	justify-content: center;
+	justify-content: center !important;
 }
 .justify-start {
-	justify-content: start;
+	justify-content: start !important;
 }
 .justify-end {
-	justify-content: end;
+	justify-content: end !important;
 }
 .justify-between {
-	justify-content: space-between;
+	justify-content: space-between !important;
 }
 .justify-around {
-	justify-content: space-around;
+	justify-content: space-around !important;
 }
 .align-items-center {
-	align-items: center;
+	align-items: center !important;
 }
 .align-items-start {
-	align-items: start;
+	align-items: start !important;
 }
 .align-items-end {
-	align-items: end;
+	align-items: end !important;
 }
 .align-items-baseline {
-	align-items: baseline;
+	align-items: baseline !important;
 }
 .align-items-stretch {
-	align-items: stretch;
+	align-items: stretch !important;
 }
 .text-left {
 	text-align: left;

@@ -15,4 +15,9 @@ urlpatterns = [
     # forms
     path('create_directory_form/', views.create_directory_form, name='create_directory_form'),
     path('upload_file_form/', views.upload_file_form, name='upload_file_form'),
+
+    # file actions
+    path('mark_file_for_deletion/<int:file_id>/', views.mark_file_for_deletion, name='mark_file_for_deletion'),
+    path('mark_directory_for_deletion/<int:directory_id>/',
+         views.mark_directory_for_deletion, name='mark_directory_for_deletion'),
 ]

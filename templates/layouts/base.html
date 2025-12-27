@@ -51,5 +51,11 @@
       {% block content %}
       {% endblock content %}
     </div>
+    <script>
+      // Global HTMX configuration for CSRF token
+      document.body.addEventListener('htmx:configRequest', (event) => {
+          event.detail.headers['X-CSRFToken'] = '{{ csrf_token }}';
+      });
+    </script>
   </body>
 </html>

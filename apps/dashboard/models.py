@@ -82,6 +82,13 @@ class Directory(models.Model):
     def mark_for_deletion(self):
         self.mark_deleted = True
         self.mark_deleted_date = now()
+        # Also mark all contained files and subdirectories for deletion
+        files = EncryptedFile.objects.filter(directory=self)
+        for file in files:
+            file.mark_for_deletion()
+        subdirs = self.__class__.objects.filter(parent=self)
+        for subdir in subdirs:
+            subdir.mark_for_deletion()
         self.save()
 
     def delete(self, *args, **kwargs):
